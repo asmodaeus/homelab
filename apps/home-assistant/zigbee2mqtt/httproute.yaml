@@ -1,0 +1,24 @@
+---
+# Zigbee2MQTT Frontend – nur intern erreichbar (kein externer Zugriff)
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: zigbee2mqtt
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: homelab
+      namespace: traefik
+      sectionName: web
+  hostnames:
+    - zigbee.local  # ANPASSEN: Lokaler Hostname oder weglassen wenn kein Zugriff gewünscht
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: zigbee2mqtt
+          port: 8080

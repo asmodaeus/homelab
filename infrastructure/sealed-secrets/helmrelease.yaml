@@ -1,0 +1,36 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sealed-secrets
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  project: default
+  source:
+    repoURL: https://bitnami-labs.github.io/sealed-secrets
+    chart: sealed-secrets
+    targetRevision: "2.16.2"
+    helm:
+      values: |
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        # Controller-Key regelmäßig rotieren
+        keyrenewperiod: "720h"  # 30 Tage
+        # WICHTIG: Controller-Key-Backup außerhalb des Repos aufbewahren!
+        # kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key \
+        #   -o yaml > sealed-secrets-key-backup.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

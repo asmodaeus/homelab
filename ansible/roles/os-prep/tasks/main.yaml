@@ -1,0 +1,95 @@
+---
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - nfs-common
+      - open-iscsi
+      - apt-transport-https
+      - ca-certificates
+      - chrony
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Configure NTP with chrony
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    mode: "0644"
+  notify: Restart chrony
+
+- name: Disable swap (K3s requirement)
+  ansible.builtin.command:
+    cmd: swapoff -a
+  changed_when: false
+
+- name: Remove swap from fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: "^([^#].*?swap.*)$"
+    replace: "# \\1"
+
+- name: Enable cgroups in cmdline.txt (Raspberry Pi OS)
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/cmdline.txt
+    backrefs: true
+    regexp: "^((?!.*cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory).*)$"
+    line: '\1 cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory'
+  register: cgroup_config_changed
+  notify: Set reboot required
+
+- name: Harden SSH – disable password auth
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - {regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no"}
+    - {regexp: "^#?PermitRootLogin", line: "PermitRootLogin no"}
+    - {regexp: "^#?X11Forwarding", line: "X11Forwarding no"}
+    - {regexp: "^#?AllowTcpForwarding", line: "AllowTcpForwarding no"}
+    - {regexp: "^#?ClientAliveInterval", line: "ClientAliveInterval 300"}
+    - {regexp: "^#?ClientAliveCountMax", line: "ClientAliveCountMax 2"}
+  notify: Restart sshd
+
+- name: Enable and start iscsid (required for some storage drivers)
+  ansible.builtin.systemd:
+    name: iscsid
+    enabled: true
+    state: started
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+- name: Persist kernel modules
+  ansible.builtin.copy:
+    content: |
+      overlay
+      br_netfilter
+    dest: /etc/modules-load.d/k3s.conf
+    mode: "0644"
+
+- name: Set kernel parameters for Kubernetes
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - {key: "net.bridge.bridge-nf-call-iptables", value: "1"}
+    - {key: "net.bridge.bridge-nf-call-ip6tables", value: "1"}
+    - {key: "net.ipv4.ip_forward", value: "1"}
+    - {key: "vm.swappiness", value: "0"}

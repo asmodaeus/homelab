@@ -1,0 +1,74 @@
+---
+global:
+  # ARM64-kompatibles Image (offizielles ArgoCD Image unterstützt ARM64)
+  image:
+    tag: "v2.13.3"
+
+configs:
+  params:
+    # Kein TLS zwischen ArgoCD-Komponenten intern nötig (Traefik macht TLS-Termination)
+    server.insecure: true
+  cm:
+    # Timeout für K3s + ARM64 (langsamer als x86)
+    timeout.reconciliation: 180s
+    # Benutzer können Apps im UI löschen (nur Admins per Default)
+    accounts.admin.enabled: "true"
+    # Resource-Tracking via Annotations (stabiler als Labels)
+    application.resourceTrackingMethod: annotation
+
+server:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+  autoscaling:
+    enabled: false
+
+  replicas: 1
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+  replicas: 1
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  replicas: 1
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+  replicas: 1
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+notifications:
+  enabled: false
+
+dex:
+  enabled: false

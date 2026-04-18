@@ -1,0 +1,25 @@
+---
+# ANPASSEN: NAS-IP und NFS-Export-Pfad vor Phase 2 eintragen
+nfs:
+  server: 192.168.1.20  # ANPASSEN: NAS-IP-Adresse
+  path: /volume1/k8s    # ANPASSEN: NFS-Export-Pfad auf dem NAS
+
+storageClass:
+  name: nfs
+  defaultClass: true
+  reclaimPolicy: Retain  # Daten bleiben nach PVC-Löschung erhalten
+  archiveOnDelete: true  # PVC-Verzeichnis wird umbenannt statt gelöscht
+
+# Verzeichnisstruktur auf NAS: /volume1/k8s/<namespace>-<pvc-name>-<uid>/
+# Beispiel: /volume1/k8s/paperless-paperless-data-pvc-abc123/
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
+
+# Nur auf Pi 4 laufen lassen (nicht auf Pi 3 mit 1GB RAM)
+nodeSelector: {}
+tolerations: []

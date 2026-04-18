@@ -1,0 +1,68 @@
+---
+# Victoria Metrics Stack – ARM64-optimiert für Raspberry Pi
+# Ziel: ~200-300MB RAM gesamt (vs. 2GB+ für kube-prometheus-stack)
+
+victoria-metrics-single:
+  server:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    retentionPeriod: "30d"
+    persistentVolume:
+      enabled: true
+      storageClass: nfs
+      size: 10Gi
+
+vmagent:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+vmalert:
+  enabled: false  # Erst aktivieren wenn Alertmanager konfiguriert
+
+alertmanager:
+  enabled: false  # Phase 2+
+
+grafana:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+  persistence:
+    enabled: true
+    storageClass: nfs
+    size: 1Gi
+  adminPassword: "CHANGE_ME"  # Über Sealed Secret verwalten!
+  # dashboards automatisch laden
+  defaultDashboardsEnabled: true
+  grafana.ini:
+    server:
+      root_url: http://grafana.local  # ANPASSEN: Phase 4 → https://grafana.home.domain.com
+    auth.anonymous:
+      enabled: false
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      memory: 32Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi

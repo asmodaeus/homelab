@@ -1,0 +1,26 @@
+---
+# K3s Server (Control Plane) Konfiguration
+k3s_server:
+  # Kein Traefik/ServiceLB – wir deployen eigene via ArgoCD
+  disable:
+    - traefik
+    - servicelb
+    - local-storage
+  # Flannel für einfaches Overlay-Netzwerk (kein Calico nötig bei 2 Nodes)
+  flannel-backend: vxlan
+  # etcd auf SD-Karte – akzeptables Risiko für Homelab
+  # Für Produktion: USB-SSD verwenden
+  etcd-expose-metrics: true
+  # API-Server auf Port 6443
+  tls-san:
+    - 192.168.1.10  # ANPASSEN: Pi 4 IP
+    - pi4           # ANPASSEN: Pi 4 Hostname
+  # Kube-Proxy Ersatz
+  kube-proxy-arg:
+    - "metrics-bind-address=0.0.0.0"
+  # kubelet Konfiguration für ARM-Optimierung
+  kubelet-arg:
+    - "eviction-hard=memory.available<100Mi,nodefs.available<10%"
+    - "eviction-soft=memory.available<200Mi,nodefs.available<15%"
+    - "eviction-soft-grace-period=memory.available=1m30s,nodefs.available=4h"
+    - "max-pods=50"

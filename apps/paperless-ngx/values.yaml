@@ -1,0 +1,74 @@
+---
+image:
+  tag: "2.13.5"
+
+env:
+  PAPERLESS_URL: http://paperless.local  # ANPASSEN: Eigene URL (Phase 4: https://paperless.home.domain.com)
+  PAPERLESS_TIME_ZONE: Europe/Berlin
+  PAPERLESS_OCR_LANGUAGE: deu+eng
+  PAPERLESS_CONSUMER_POLLING: "60"
+  PAPERLESS_CONSUMER_POLLING_RETRY_COUNT: "5"
+  PAPERLESS_TASK_WORKERS: "1"  # Reduziert für Pi 4 2GB
+  PAPERLESS_THREADS_PER_WORKER: "1"
+  PAPERLESS_WEBSERVER_WORKERS: "1"
+
+# Secrets via Sealed Secrets (vor Deploy erstellen!)
+# kubectl create secret generic paperless-secrets \
+#   --from-literal=PAPERLESS_SECRET_KEY=$(openssl rand -base64 48) \
+#   --from-literal=PAPERLESS_ADMIN_USER=admin \
+#   --from-literal=PAPERLESS_ADMIN_PASSWORD=DEIN_PASSWORT \
+#   --dry-run=client -o yaml -n paperless | \
+#   kubeseal --format yaml > apps/paperless-ngx/paperless-sealed-secret.yaml
+envFrom:
+  - secretRef:
+      name: paperless-secrets
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 768Mi
+
+persistence:
+  data:
+    enabled: true
+    storageClass: nfs
+    size: 10Gi
+  media:
+    enabled: true
+    storageClass: nfs
+    size: 20Gi
+  export:
+    enabled: true
+    storageClass: nfs
+    size: 5Gi
+  consume:
+    enabled: true
+    storageClass: nfs
+    size: 2Gi
+
+# Redis für Paperless (eingebettet)
+redis:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+# PostgreSQL für Paperless (eingebettet)
+postgresql:
+  enabled: true
+  primary:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+    persistence:
+      enabled: true
+      storageClass: nfs
+      size: 5Gi

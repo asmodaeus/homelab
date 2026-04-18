@@ -1,0 +1,37 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["after 2am and before 5am on monday"],
+  "prConcurrentLimit": 5,
+  "prCreation": "not-pending",
+  "kubernetes": {
+    "fileMatch": ["apps/**/*.yaml", "infrastructure/**/*.yaml", "monitoring/**/*.yaml"]
+  },
+  "helm-values": {
+    "fileMatch": ["apps/**/values\\.yaml", "infrastructure/**/values\\.yaml", "monitoring/**/values\\.yaml", "bootstrap/**/values\\.yaml"]
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["helm-values", "kubernetes"],
+      "matchPackagePatterns": [".*"],
+      "groupName": "helm charts",
+      "groupSlug": "helm-charts"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "automerge": true
+    },
+    {
+      "matchPackageNames": ["k3s"],
+      "groupName": "K3s",
+      "enabled": false
+    }
+  ]
+}

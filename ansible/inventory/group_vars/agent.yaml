@@ -1,0 +1,9 @@
+---
+# K3s Agent (Worker) Konfiguration
+k3s_agent:
+  kubelet-arg:
+    # Pi 3 hat 1GB RAM – aggressivere Eviction
+    - "eviction-hard=memory.available<80Mi,nodefs.available<10%"
+    - "eviction-soft=memory.available<150Mi,nodefs.available<15%"
+    - "eviction-soft-grace-period=memory.available=1m,nodefs.available=2h"
+    - "max-pods=20"

@@ -1,0 +1,13 @@
+---
+- name: OS Preparation for K3s
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - os-prep
+
+  post_tasks:
+    - name: Reboot to apply cgroup changes
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+        msg: "Rebooting for cgroup configuration to take effect"
+      when: cgroup_config_changed | default(false)

@@ -1,0 +1,31 @@
+---
+# SCHLÜSSELSTEIN: Einzige Ressource, die manuell angewendet wird.
+# Danach verwaltet ArgoCD alles aus Git.
+#
+# kubectl apply -f bootstrap/root-app.yaml --kubeconfig=kubeconfig
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/asmodaeus/homelab.git
+    targetRevision: HEAD
+    path: bootstrap
+    directory:
+      recurse: true
+      exclude: "root-app.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

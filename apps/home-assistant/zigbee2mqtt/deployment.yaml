@@ -1,0 +1,92 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zigbee2mqtt
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: zigbee2mqtt
+  template:
+    metadata:
+      labels:
+        app: zigbee2mqtt
+    spec:
+      # MUSS auf Pi 3 laufen – USB Zigbee-Adapter ist dort angesteckt
+      nodeSelector:
+        homelab/zigbee-adapter: "true"
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: light
+          effect: NoSchedule
+      containers:
+        - name: zigbee2mqtt
+          image: koenkk/zigbee2mqtt:2.1.1
+          ports:
+            - containerPort: 8080
+              name: frontend
+          env:
+            - name: TZ
+              value: Europe/Berlin
+            - name: ZIGBEE2MQTT_DATA
+              value: /app/data
+          envFrom:
+            - secretRef:
+                name: zigbee2mqtt-secrets  # Erstellt via kubeseal (MQTT user/pass)
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            privileged: true  # Für USB-Device-Zugriff erforderlich
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: config
+              mountPath: /app/data/configuration.yaml
+              subPath: configuration.yaml
+            - name: zigbee-device
+              mountPath: /dev/ttyACM0  # ANPASSEN: Muss mit serial.port in configmap übereinstimmen
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: zigbee2mqtt-data
+        - name: config
+          configMap:
+            name: zigbee2mqtt-config
+        - name: zigbee-device
+          hostPath:
+            path: /dev/ttyACM0  # ANPASSEN: USB-Pfad auf Pi 3
+            type: CharDevice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zigbee2mqtt
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  selector:
+    app: zigbee2mqtt
+  ports:
+    - name: frontend
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

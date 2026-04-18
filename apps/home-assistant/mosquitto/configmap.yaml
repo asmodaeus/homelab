@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  mosquitto.conf: |
+    listener 1883
+    allow_anonymous false
+    password_file /mosquitto/config/passwd
+
+    persistence true
+    persistence_location /mosquitto/data/
+
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type information

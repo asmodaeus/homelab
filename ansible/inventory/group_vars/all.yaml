@@ -1,0 +1,21 @@
+---
+# K3s Version – via System Upgrade Controller automatisch aktualisiert,
+# hier nur für initialen Bootstrap relevant
+k3s_version: v1.31.4+k3s1
+
+# K3s Token – vor dem ersten Run als Ansible Vault Secret setzen:
+# ansible-vault encrypt_string 'DEIN_LANGES_ZUFAELLIGES_TOKEN' --name k3s_token
+# Oder in group_vars/all/vault.yaml (nicht in Git, via .gitignore ausgeschlossen)
+k3s_token: "CHANGE_ME_BEFORE_BOOTSTRAP"
+
+# Zeitzone
+timezone: Europe/Berlin
+
+# NTP-Server (UniFi als lokaler NTP-Server möglich)
+ntp_servers:
+  - 192.168.1.1  # ANPASSEN: UniFi Router IP
+  - time.cloudflare.com
+
+# SSH – nur Key-Auth, kein Passwort-Login
+ssh_allowed_users:
+  - pi

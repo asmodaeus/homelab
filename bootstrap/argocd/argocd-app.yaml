@@ -1,0 +1,38 @@
+---
+# ArgoCD verwaltet sich selbst via Helm – ermöglicht Updates ohne manuellen Eingriff
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: "7.7.17"
+    helm:
+      valueFiles:
+        - $repo/bootstrap/argocd/values.yaml
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: "7.7.17"
+      helm:
+        valueFiles:
+          - $repo/bootstrap/argocd/values.yaml
+    - repoURL: https://github.com/asmodaeus/homelab.git
+      targetRevision: HEAD
+      ref: repo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

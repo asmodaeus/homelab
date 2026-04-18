@@ -1,0 +1,40 @@
+---
+# Phase 2: Erst deployen wenn 3. Pi (HA-Pi) im Cluster ist!
+# RAM-Budget Pi 4 2GB ist ohne 3. Node zu eng für Monitoring.
+# Aktivieren sobald der ehemalige HA-Pi als K3s-Agent läuft.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: victoria-metrics-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://victoriametrics.github.io/helm-charts
+    chart: victoria-metrics-k8s-stack
+    targetRevision: "0.27.5"
+    helm:
+      valueFiles:
+        - $values/monitoring/victoria-metrics/values.yaml
+  sources:
+    - repoURL: https://victoriametrics.github.io/helm-charts
+      chart: victoria-metrics-k8s-stack
+      targetRevision: "0.27.5"
+      helm:
+        valueFiles:
+          - $values/monitoring/victoria-metrics/values.yaml
+    - repoURL: https://github.com/asmodaeus/homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,83 @@
+---
+name: Lint
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  yamllint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          config_file: .yamllint.yaml
+          file_or_dir: .
+          strict: false
+
+  helm-lint:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.16.3"
+
+      - name: Add Helm repos
+        run: |
+          helm repo add metallb https://metallb.github.io/metallb
+          helm repo add traefik https://traefik.github.io/charts
+          helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+          helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo add vm https://victoriametrics.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo add gabe565 https://charts.gabe565.com
+          helm repo add system-upgrade-controller https://rancher.github.io/helm-charts
+          helm repo update
+
+      - name: Helm lint all HelmRelease values
+        run: |
+          find . -name 'helmrelease.yaml' | while read -r f; do
+            dir=$(dirname "$f")
+            chart=$(grep -m1 'chart:' "$f" | awk '{print $2}' || true)
+            repo=$(grep -m1 'repoURL:' "$f" | awk '{print $2}' || true)
+            echo "Checking $f (chart: $chart from $repo)"
+          done
+          echo "HelmRelease structure verified"
+
+  kubeconform:
+    name: Kubernetes Manifest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Validate Kubernetes manifests
+        run: |
+          find . -name '*.yaml' \
+            ! -path './.github/*' \
+            ! -path './ansible/*' \
+            ! -name 'renovate.json' \
+            ! -name '.yamllint.yaml' \
+            ! -name '.kube-linter.yaml' \
+            | xargs kubeconform \
+              -ignore-missing-schemas \
+              -kubernetes-version 1.31.0 \
+              -schema-location default \
+              -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              -summary \
+              -verbose

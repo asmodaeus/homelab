@@ -1,0 +1,73 @@
+---
+- name: Bootstrap ArgoCD
+  hosts: server
+  become: false
+  vars:
+    argocd_version: "7.7.17"
+    argocd_namespace: argocd
+    kubeconfig_path: "{{ playbook_dir }}/../../kubeconfig"
+
+  tasks:
+    - name: Add ArgoCD Helm repo
+      ansible.builtin.command:
+        cmd: helm repo add argo https://argoproj.github.io/argo-helm
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Update Helm repos
+      ansible.builtin.command:
+        cmd: helm repo update
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Create argocd namespace
+      ansible.builtin.command:
+        cmd: kubectl create namespace {{ argocd_namespace }} --dry-run=client -o yaml
+      register: ns_manifest
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Apply argocd namespace
+      ansible.builtin.shell:
+        cmd: kubectl apply -f - --kubeconfig={{ kubeconfig_path }}
+        stdin: "{{ ns_manifest.stdout }}"
+      delegate_to: localhost
+      changed_when: true
+
+    - name: Install ArgoCD via Helm
+      ansible.builtin.command:
+        cmd: >
+          helm upgrade --install argocd argo/argo-cd
+          --namespace {{ argocd_namespace }}
+          --version {{ argocd_version }}
+          --values {{ playbook_dir }}/../../bootstrap/argocd/values.yaml
+          --kubeconfig {{ kubeconfig_path }}
+          --wait
+          --timeout 10m
+      delegate_to: localhost
+      changed_when: true
+
+    - name: Wait for ArgoCD pods to be ready
+      ansible.builtin.command:
+        cmd: >
+          kubectl wait pod
+          --namespace {{ argocd_namespace }}
+          --selector app.kubernetes.io/name=argocd-server
+          --for=condition=Ready
+          --timeout=300s
+          --kubeconfig={{ kubeconfig_path }}
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Print ArgoCD initial admin password command
+      ansible.builtin.debug:
+        msg: >
+          ArgoCD installiert! Initial-Passwort ermitteln:
+          kubectl -n argocd get secret argocd-initial-admin-secret
+          -o jsonpath='{.data.password}' --kubeconfig={{ kubeconfig_path }} | base64 -d
+
+    - name: Remind to apply root-app
+      ansible.builtin.debug:
+        msg: >
+          Als nächstes: kubectl apply -f bootstrap/root-app.yaml
+          --kubeconfig={{ kubeconfig_path }}

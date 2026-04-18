@@ -1,0 +1,35 @@
+---
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  trivy:
+    name: Trivy Config Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: table
+          exit-code: "0"
+          severity: CRITICAL,HIGH
+
+  kube-linter:
+    name: Kube-Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run kube-linter
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: .
+          config: .kube-linter.yaml
+          format: plain

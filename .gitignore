@@ -1,0 +1,35 @@
+# Secrets – never commit plaintext secrets
+*.env
+*.secret
+*-secret.yaml
+!*sealed-secret.yaml
+
+# kubeconfig
+kubeconfig
+kubeconfig.yaml
+*.kubeconfig
+
+# Ansible vault passwords
+.vault_pass
+vault_pass.txt
+
+# Python virtualenvs
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Claude Code local settings (contains model preferences, no secrets but personal)
+.claude/settings.local.json
+
+# Helm chart lock files generated during testing
+Chart.lock

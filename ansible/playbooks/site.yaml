@@ -1,0 +1,9 @@
+---
+- name: OS Preparation
+  ansible.builtin.import_playbook: os-prep.yaml
+
+- name: K3s Installation
+  ansible.builtin.import_playbook: k3s-install.yaml
+
+- name: ArgoCD Bootstrap
+  ansible.builtin.import_playbook: argocd-bootstrap.yaml

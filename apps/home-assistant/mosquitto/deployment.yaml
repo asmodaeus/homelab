@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      # Mosquitto läuft auf Pi 3 zusammen mit Zigbee2MQTT
+      nodeSelector:
+        homelab/zigbee-adapter: "true"
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: light
+          effect: NoSchedule
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2.0.20
+          ports:
+            - containerPort: 1883
+              name: mqtt
+          resources:
+            requests:
+              cpu: 25m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+          volumeMounts:
+            - name: config
+              mountPath: /mosquitto/config
+            - name: data
+              mountPath: /mosquitto/data
+            - name: passwd
+              mountPath: /mosquitto/config/passwd
+              subPath: passwd
+          livenessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: mosquitto-data
+        - name: passwd
+          secret:
+            secretName: mosquitto-passwd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  selector:
+    app: mosquitto
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: 1883
+  type: ClusterIP

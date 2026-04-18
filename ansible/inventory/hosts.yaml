@@ -1,0 +1,18 @@
+---
+# ANPASSEN: Echte IPs eintragen und Hostnamen setzen
+# Statische DHCP-Leases im UniFi Router zuerst konfigurieren!
+k3s_cluster:
+  children:
+    server:
+      hosts:
+        pi4:
+          ansible_host: 192.168.1.10  # ANPASSEN: Pi 4 IP
+          ansible_user: pi
+    agent:
+      hosts:
+        pi3:
+          ansible_host: 192.168.1.11  # ANPASSEN: Pi 3 IP
+          ansible_user: pi
+          # Pi 3 hat 1GB RAM → nur leichte Workloads
+          # Nach K3s-Install: kubectl taint node pi3 workload=light:NoSchedule
+          # Nach K3s-Install: kubectl label node pi3 homelab/zigbee-adapter=true

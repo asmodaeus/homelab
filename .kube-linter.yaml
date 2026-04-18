@@ -1,0 +1,17 @@
+---
+checks:
+  addAllBuiltIn: true
+  exclude:
+    # Traefik and Home Assistant need host networking / privileged access
+    - "host-network"
+    - "privileged-container"
+    # Zigbee2MQTT needs device access
+    - "host-pid"
+    # Some charts use latest tag internally
+    - "latest-tag"
+
+customChecks: []
+
+ignorePaths:
+  - "bootstrap/"
+  - "monitoring/"

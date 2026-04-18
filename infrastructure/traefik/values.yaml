@@ -1,0 +1,85 @@
+---
+# Traefik v3 – Gateway API native
+deployment:
+  replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+# Gateway API aktivieren
+gateway:
+  enabled: true
+  name: homelab
+  namespace: "{{ .Release.Namespace }}"
+  annotations: {}
+  listeners:
+    web:
+      port: 8000
+      hostname: ""
+      protocol: HTTP
+      namespacePolicy: All
+    websecure:
+      port: 8443
+      hostname: ""
+      protocol: HTTPS
+      namespacePolicy: All
+      certificateRefs:
+        - name: wildcard-tls  # Phase 4: cert-manager erstellt dieses Secret
+          kind: Secret
+
+gatewayClass:
+  enabled: true
+  name: traefik
+
+# Kein built-in Ingress – reine Gateway API
+ingressClass:
+  enabled: false
+  isDefaultClass: false
+
+# LoadBalancer Service (MetalLB gibt IP)
+service:
+  enabled: true
+  type: LoadBalancer
+  annotations: {}
+
+# Logs
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: false  # Auf Pi 3/4 spart das SD-Karten-I/O
+
+providers:
+  kubernetesGateway:
+    enabled: true
+  kubernetesIngress:
+    enabled: false
+
+# Prometheus Metrics (für Phase 2)
+metrics:
+  prometheus:
+    enabled: true
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+
+# Ports
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    tls:
+      enabled: true

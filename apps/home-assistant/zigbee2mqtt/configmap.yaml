@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zigbee2mqtt-config
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  configuration.yaml: |
+    homeassistant: true
+    permit_join: false
+
+    mqtt:
+      server: mqtt://mosquitto.home-assistant.svc.cluster.local:1883
+      # user und password kommen aus Sealed Secret (zigbee2mqtt-secrets)
+
+    serial:
+      port: /dev/ttyACM0  # ANPASSEN: USB-Pfad via `ls -la /dev/ttyUSB* /dev/ttyACM*` prüfen
+      adapter: auto
+
+    frontend:
+      enabled: true
+      port: 8080
+
+    advanced:
+      log_level: info
+      log_output:
+        - console
+      pan_id: GENERATE  # Beim ersten Start generiert Zigbee2MQTT eine eindeutige PAN-ID
+      network_key: GENERATE
