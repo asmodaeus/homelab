@@ -26,5 +26,14 @@ jobs:
       - name: Install ansible-core and ansible-lint
         run: pip install ansible-core ansible-lint
 
+      - name: Install Ansible roles and collections
+        run: |
+          ansible-galaxy role install -r ansible/requirements.yaml
+          ansible-galaxy collection install -r ansible/requirements.yaml
+
       - name: Run ansible-lint
         run: ansible-lint ansible/
+        env:
+          # ansible/roles/ enthält lokale Rollen (os-prep)
+          # ~/.ansible/roles/ enthält Galaxy-Rollen (xanmanning.k3s)
+          ANSIBLE_ROLES_PATH: "ansible/roles:~/.ansible/roles"

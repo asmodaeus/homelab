@@ -13,10 +13,5 @@ k3s_cluster:
         pi3:
           ansible_host: 192.168.1.11  # ANPASSEN: Pi 3 IP
           ansible_user: pi
-          # Pi 3 hat 1GB RAM → nur leichte Workloads
-          # Nach K3s-Install: kubectl taint node pi3 workload=light:NoSchedule
-          # Nach K3s-Install: kubectl label node pi3 homelab/zigbee-adapter=true
-        # pi-ha wird nach der Home-Assistant-Migration hinzugefügt (Pi 4 2GB)
-        # pi-ha:
-        #   ansible_host: 192.168.1.12  # ANPASSEN: HA-Pi IP
-        #   ansible_user: pi
+          # Pi 3 = 1GB RAM, nur leichte Workloads (Zigbee2MQTT + Mosquitto)
+          # Nach K3s-Install Taints/Labels setzen: siehe docs/bootstrap.md
