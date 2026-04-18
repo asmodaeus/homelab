@@ -15,7 +15,6 @@
         src: /etc/rancher/k3s/k3s.yaml
         dest: "{{ playbook_dir }}/../../kubeconfig"
         flat: true
-      run_once: true
 
 - name: Patch kubeconfig with real server IP
   hosts: localhost
