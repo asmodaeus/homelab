@@ -42,7 +42,7 @@ jobs:
           helm repo add vm https://victoriametrics.github.io/helm-charts
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo add gabe565 https://charts.gabe565.com
-          helm repo add system-upgrade-controller https://rancher.github.io/helm-charts
+          # system-upgrade-controller hat keinen Helm-Repo – wird via Git-Source deployed
           helm repo update
 
       - name: Helm lint all HelmRelease values

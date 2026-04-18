@@ -8,13 +8,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
-  source:
-    repoURL: https://traefik.github.io/charts
-    chart: traefik
-    targetRevision: "33.2.1"
-    helm:
-      valueFiles:
-        - $values/infrastructure/traefik/values.yaml
   sources:
     - repoURL: https://traefik.github.io/charts
       chart: traefik

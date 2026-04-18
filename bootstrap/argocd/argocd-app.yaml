@@ -9,13 +9,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
   project: default
-  source:
-    repoURL: https://argoproj.github.io/argo-helm
-    chart: argo-cd
-    targetRevision: "7.7.17"
-    helm:
-      valueFiles:
-        - $repo/bootstrap/argocd/values.yaml
   sources:
     - repoURL: https://argoproj.github.io/argo-helm
       chart: argo-cd
