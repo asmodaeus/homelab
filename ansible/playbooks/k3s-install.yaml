@@ -7,7 +7,7 @@
         k3s_state: installed
 
 - name: Fetch kubeconfig from server
-  hosts: "{{ groups['server'][0] }}"
+  hosts: server
   become: true
   tasks:
     - name: Copy kubeconfig to local machine
@@ -15,6 +15,7 @@
         src: /etc/rancher/k3s/k3s.yaml
         dest: "{{ playbook_dir }}/../../kubeconfig"
         flat: true
+      run_once: true
 
 - name: Patch kubeconfig with real server IP
   hosts: localhost

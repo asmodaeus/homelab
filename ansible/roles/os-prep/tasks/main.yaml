@@ -1,7 +1,8 @@
 ---
 - name: Set timezone
-  community.general.timezone:
-    name: "{{ timezone }}"
+  ansible.builtin.command:
+    cmd: timedatectl set-timezone "{{ timezone }}"
+  changed_when: false
 
 - name: Install required packages
   ansible.builtin.apt:
@@ -66,12 +67,12 @@
     state: started
 
 - name: Load required kernel modules
-  community.general.modprobe:
-    name: "{{ item }}"
-    state: present
+  ansible.builtin.command:
+    cmd: modprobe "{{ item }}"
   loop:
     - overlay
     - br_netfilter
+  changed_when: false
 
 - name: Persist kernel modules
   ansible.builtin.copy:
@@ -82,14 +83,12 @@
     mode: "0644"
 
 - name: Set kernel parameters for Kubernetes
-  ansible.posix.sysctl:
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-    sysctl_set: true
-    state: present
-    reload: true
-  loop:
-    - {key: "net.bridge.bridge-nf-call-iptables", value: "1"}
-    - {key: "net.bridge.bridge-nf-call-ip6tables", value: "1"}
-    - {key: "net.ipv4.ip_forward", value: "1"}
-    - {key: "vm.swappiness", value: "0"}
+  ansible.builtin.copy:
+    content: |
+      net.bridge.bridge-nf-call-iptables = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward = 1
+      vm.swappiness = 0
+    dest: /etc/sysctl.d/k3s.conf
+    mode: "0644"
+  notify: Apply sysctl settings
