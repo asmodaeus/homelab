@@ -1,6 +1,5 @@
 ---
-# ANPASSEN: IP-Range muss aus DHCP-Pool im UniFi Router ausgeschlossen sein!
-# Beispiel: UniFi → Networks → LAN → DHCP Range auf 192.168.1.100–192.168.1.199 begrenzen
+# ANPASSEN: IP-Range muss aus DHCP-Pool des Routers ausgeschlossen sein!
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:

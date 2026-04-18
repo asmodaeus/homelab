@@ -8,13 +8,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
-  source:
-    repoURL: https://charts.gabe565.com
-    chart: paperless-ngx
-    targetRevision: "0.19.1"
-    helm:
-      valueFiles:
-        - $values/apps/paperless-ngx/values.yaml
   sources:
     - repoURL: https://charts.gabe565.com
       chart: paperless-ngx

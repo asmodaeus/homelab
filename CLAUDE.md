@@ -8,7 +8,7 @@ Kubernetes-Homelab auf Raspberry Pi (ARM64/ARM32), verwaltet via GitOps.
 |---|---|---|---|
 | `pi4` | Pi 4 Model B | 2GB | K3s Control Plane + Worker |
 | `pi3` | Pi 3 Model B V1.2 | 1GB | K3s Agent (light workloads only) |
-| `pi-ha` | TBD (HA-Pi nach Migration) | TBD | K3s Agent |
+| `pi-ha` | Pi 4 Model B | 2GB | K3s Agent (nach HA-Migration) |
 
 Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Toleration laufen darauf
 (aktuell: Zigbee2MQTT + Mosquitto, da USB-Zigbee-Adapter am Pi 3 hängt).
@@ -46,7 +46,7 @@ Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Tolerat
 |---|---|
 | `bootstrap/root-app.yaml` | Einzige manuell angewendete Ressource – Schlüsselstein des GitOps-Systems |
 | `ansible/inventory/hosts.yaml` | Pi-IPs und Rollen (muss vor Bootstrap ausgefüllt sein) |
-| `infrastructure/metallb/ip-address-pool.yaml` | MetalLB IP-Range (im UniFi DHCP ausschließen!) |
+| `infrastructure/metallb/ip-address-pool.yaml` | MetalLB IP-Range (im Router-DHCP ausschließen!) |
 | `infrastructure/nfs-provisioner/values.yaml` | NAS-IP + NFS-Pfad (vor Phase 2 ausfüllen) |
 | `apps/home-assistant/zigbee2mqtt/deployment.yaml` | USB-Device-Path (muss mit `ls /dev/ttyUSB* /dev/ttyACM*` geprüft werden) |
 

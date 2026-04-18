@@ -28,11 +28,12 @@
       changed_when: false
 
     - name: Apply argocd namespace
-      ansible.builtin.shell:
+      ansible.builtin.command:
         cmd: kubectl apply -f - --kubeconfig={{ kubeconfig_path }}
         stdin: "{{ ns_manifest.stdout }}"
       delegate_to: localhost
-      changed_when: true
+      register: kubectl_apply
+      changed_when: "'configured' in kubectl_apply.stdout or 'created' in kubectl_apply.stdout"
 
     - name: Install ArgoCD via Helm
       ansible.builtin.command:
@@ -45,7 +46,8 @@
           --wait
           --timeout 10m
       delegate_to: localhost
-      changed_when: true
+      register: helm_install
+      changed_when: helm_install.rc == 0
 
     - name: Wait for ArgoCD pods to be ready
       ansible.builtin.command:

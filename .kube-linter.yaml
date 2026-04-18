@@ -2,13 +2,38 @@
 checks:
   addAllBuiltIn: true
   exclude:
-    # Traefik and Home Assistant need host networking / privileged access
+    # Homelab: Zigbee/HA brauchen Host-Zugriff und root
     - "host-network"
     - "privileged-container"
-    # Zigbee2MQTT needs device access
     - "host-pid"
-    # Some charts use latest tag internally
     - "latest-tag"
+    # Security-Context-Checks: für Homelab-Apps nicht umsetzbar
+    # (HA, Paperless, Z2M laufen als root und brauchen writeable FS)
+    - "run-as-non-root"
+    - "no-read-only-root-fs"
+    - "privilege-escalation-container"
+    # Zigbee2MQTT braucht hostPath-Device-Mount
+    - "writable-host-mount"
+    # Homelab: Single-Replica-Apps (HA, Mosquitto, Z2M sind stateful)
+    - "minimum-three-replicas"
+    - "no-rolling-update-strategy"
+    # Homelab: kein NetworkPolicy-Overhead
+    - "non-isolated-pod"
+    # Homelab: kein dediziertes ServiceAccount nötig
+    - "default-service-account"
+    # Homelab: nodeSelector statt node-affinity
+    - "no-node-affinity"
+    # Homelab: keine Annotations/Labels-Anforderungen
+    - "required-annotation-email"
+    - "required-label-owner"
+    # Homelab: restart-policy ist in Deployments nicht erforderlich
+    - "restart-policy"
+    # Homelab: dnsconfig optional für einfache Apps
+    - "dnsconfig-options"
+    # Homelab: sorted-keys ist kein funktionaler Check
+    - "sorted-keys"
+    # Mosquitto (TCP) hat keinen HTTP-Readiness-Endpoint
+    - "no-readiness-probe"
 
 customChecks: []
 

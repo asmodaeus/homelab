@@ -11,9 +11,9 @@ k3s_token: "CHANGE_ME_BEFORE_BOOTSTRAP"
 # Zeitzone
 timezone: Europe/Berlin
 
-# NTP-Server (UniFi als lokaler NTP-Server möglich)
+# NTP-Server (Router als lokaler NTP-Server möglich)
 ntp_servers:
-  - 192.168.1.1  # ANPASSEN: UniFi Router IP
+  - 192.168.1.1  # ANPASSEN: Router IP
   - time.cloudflare.com
 
 # SSH – nur Key-Auth, kein Passwort-Login

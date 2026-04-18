@@ -12,3 +12,8 @@
 - name: Set reboot required
   ansible.builtin.set_fact:
     cgroup_config_changed: true
+
+- name: Apply sysctl settings
+  ansible.builtin.command:
+    cmd: sysctl --system
+  changed_when: false

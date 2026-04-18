@@ -5,9 +5,12 @@ on:
   push:
     paths:
       - "ansible/**"
+      - ".github/workflows/ci-ansible.yaml"
   pull_request:
     paths:
       - "ansible/**"
+      - ".github/workflows/ci-ansible.yaml"
+  workflow_dispatch:
 
 jobs:
   ansible-lint:
@@ -16,7 +19,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run ansible-lint
-        uses: ansible/ansible-lint@v24
+      - uses: actions/setup-python@v5
         with:
-          path: ansible/
+          python-version: "3.12"
+
+      - name: Install ansible-core and ansible-lint
+        run: pip install ansible-core ansible-lint
+
+      - name: Install Ansible roles and collections
+        run: |
+          ansible-galaxy role install -r ansible/requirements.yaml
+          ansible-galaxy collection install -r ansible/requirements.yaml
+
+      - name: Run ansible-lint
+        run: ansible-lint ansible/
+        env:
+          # ansible/roles/ enthält lokale Rollen (os-prep)
+          # ~/.ansible/roles/ enthält Galaxy-Rollen (xanmanning.k3s)
+          ANSIBLE_ROLES_PATH: "ansible/roles:~/.ansible/roles"

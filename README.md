@@ -43,7 +43,7 @@ Kubernetes-Homelab auf Raspberry Pi, verwaltet via GitOps (ArgoCD).
 Voraussetzungen:
 - Alle Pis mit **64-bit OS** (Raspberry Pi OS Lite 64-bit)
 - SSH-Key-Auth konfiguriert
-- Statische DHCP-Leases für alle Pis im UniFi Router
+- Statische DHCP-Leases für alle Pis im Router
 - MetalLB IP-Range (z.B. 192.168.1.200–210) aus DHCP-Pool ausgeschlossen
 
 ```bash
