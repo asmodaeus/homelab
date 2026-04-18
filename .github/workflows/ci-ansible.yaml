@@ -5,9 +5,12 @@ on:
   push:
     paths:
       - "ansible/**"
+      - ".github/workflows/ci-ansible.yaml"
   pull_request:
     paths:
       - "ansible/**"
+      - ".github/workflows/ci-ansible.yaml"
+  workflow_dispatch:
 
 jobs:
   ansible-lint:
