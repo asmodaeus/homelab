@@ -6,21 +6,22 @@
       vars:
         k3s_state: installed
 
-  post_tasks:
+- name: Fetch kubeconfig from server
+  hosts: "{{ groups['server'][0] }}"
+  become: true
+  tasks:
     - name: Copy kubeconfig to local machine
       ansible.builtin.fetch:
         src: /etc/rancher/k3s/k3s.yaml
         dest: "{{ playbook_dir }}/../../kubeconfig"
         flat: true
-      run_once: true
-      delegate_to: "{{ groups['server'][0] }}"
-      become: true
 
+- name: Patch kubeconfig with real server IP
+  hosts: localhost
+  gather_facts: false
+  tasks:
     - name: Replace localhost with server IP in kubeconfig
       ansible.builtin.replace:
         path: "{{ playbook_dir }}/../../kubeconfig"
         regexp: "https://127.0.0.1:6443"
         replace: "https://{{ hostvars[groups['server'][0]]['ansible_host'] }}:6443"
-      delegate_to: localhost
-      become: false
-      run_once: true

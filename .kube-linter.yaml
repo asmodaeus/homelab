@@ -2,13 +2,17 @@
 checks:
   addAllBuiltIn: true
   exclude:
-    # Traefik and Home Assistant need host networking / privileged access
+    # Homelab: Zigbee/HA brauchen Host-Zugriff und root
     - "host-network"
     - "privileged-container"
-    # Zigbee2MQTT needs device access
     - "host-pid"
-    # Some charts use latest tag internally
     - "latest-tag"
+    # Security-Context-Checks: für Homelab-Apps nicht umsetzbar
+    # (HA, Paperless, Z2M laufen als root und brauchen writeable FS)
+    - "run-as-non-root"
+    - "no-read-only-root-fs"
+    # Zigbee2MQTT braucht hostPath-Device-Mount
+    - "writable-host-mount"
 
 customChecks: []
 
