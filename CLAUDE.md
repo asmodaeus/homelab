@@ -8,7 +8,7 @@ Kubernetes-Homelab auf Raspberry Pi (ARM64/ARM32), verwaltet via GitOps.
 |---|---|---|---|
 | `pi4` | Pi 4 Model B | 2GB | K3s Control Plane + Worker |
 | `pi3` | Pi 3 Model B V1.2 | 1GB | K3s Agent (light workloads only) |
-| `pi-ha` | TBD (HA-Pi nach Migration) | TBD | K3s Agent |
+| `pi-ha` | Pi 4 Model B | 2GB | K3s Agent (nach HA-Migration) |
 
 Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Toleration laufen darauf
 (aktuell: Zigbee2MQTT + Mosquitto, da USB-Zigbee-Adapter am Pi 3 hängt).
