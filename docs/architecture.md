@@ -7,7 +7,7 @@ Internet
     │
     │ (Phase 4: Cloudflare DNS + Tunnel)
     ▼
-UniFi Dream Machine Pro
+Router/Firewall
     │
     │ 192.168.1.0/24
     ├─────────────────────────────────────┐

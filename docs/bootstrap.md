@@ -11,7 +11,7 @@ Schritt-für-Schritt vom leeren Repo zum laufenden Cluster.
    - SSH aktivieren, SSH-Key hinterlegen
    - Hostname setzen: `pi4`, `pi3`
 
-2. **Statische DHCP-Leases** im UniFi Router
+2. **Statische DHCP-Leases** im Router
    - Network → LAN → DHCP → Static Leases
    - Pi 4: z.B. 192.168.1.10
    - Pi 3: z.B. 192.168.1.11

@@ -100,7 +100,7 @@ Für K3s auf SD-Karte:
 
 ## Netzwerk
 
-- **Router:** UniFi Dream Machine Pro
+- **Router:** Heimnetz-Router
 - **Subnetz:** 192.168.1.0/24
 - **MetalLB Range:** 192.168.1.200–192.168.1.210 (aus DHCP-Pool ausgeschlossen)
 - **Pi 4 (`pi4`):** 192.168.1.10 (statische DHCP-Lease)

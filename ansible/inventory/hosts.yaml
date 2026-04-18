@@ -1,6 +1,6 @@
 ---
 # ANPASSEN: Echte IPs eintragen und Hostnamen setzen
-# Statische DHCP-Leases im UniFi Router zuerst konfigurieren!
+# Statische DHCP-Leases im Router zuerst konfigurieren!
 k3s_cluster:
   children:
     server:
