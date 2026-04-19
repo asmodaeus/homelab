@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ghcr-lexfrei-charts
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  name: lexfrei-charts
+  url: oci://ghcr.io/lexfrei/charts
+  type: helm
+  enableOCI: "true"

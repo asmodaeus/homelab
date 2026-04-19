@@ -35,12 +35,7 @@ spec:
               hostname: ""
               protocol: HTTP
               namespacePolicy: All
-            websecure:
-              port: 8443
-              hostname: ""
-              protocol: HTTPS
-              namespacePolicy: All
-              certificateRefs: []  # Phase 4: - name: wildcard-tls / kind: Secret
+            # websecure (HTTPS): Phase 4 – erst aktivieren wenn wildcard-tls Secret via cert-manager existiert
 
         gatewayClass:
           enabled: true
