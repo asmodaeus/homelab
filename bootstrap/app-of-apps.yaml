@@ -10,6 +10,20 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
+  strategy:
+    type: RollingSync
+    rollingSync:
+      steps:
+        - matchExpressions:
+            - key: sync-order
+              operator: In
+              values:
+                - "1"
+        - matchExpressions:
+            - key: sync-order
+              operator: In
+              values:
+                - "2"
   generators:
     - matrix:
         generators:
@@ -20,15 +34,15 @@ spec:
           - list:
               elements:
                 - path: infrastructure
-                  wave: "-2"
+                  syncOrder: "1"
                 - path: apps
-                  wave: "0"
+                  syncOrder: "2"
   template:
     metadata:
       name: '{{path}}'
       namespace: argocd
-      annotations:
-        argocd.argoproj.io/sync-wave: '{{wave}}'
+      labels:
+        sync-order: '{{syncOrder}}'
     spec:
       project: default
       source:
@@ -44,6 +58,12 @@ spec:
         automated:
           prune: true
           selfHeal: true
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true

@@ -39,6 +39,9 @@ applicationSet:
 
   replicas: 1
 
+  extraArgs:
+    - --enable-progressive-syncs
+
 controller:
   resources:
     requests:
