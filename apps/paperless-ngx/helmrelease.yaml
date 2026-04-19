@@ -8,16 +8,76 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
-  sources:
-    - repoURL: https://charts.gabe565.com
-      chart: paperless-ngx
-      targetRevision: "0.19.1"
-      helm:
-        valueFiles:
-          - $values/apps/paperless-ngx/values.yaml
-    - repoURL: https://github.com/asmodaeus/homelab.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://charts.gabe565.com
+    chart: paperless-ngx
+    targetRevision: "0.19.1"
+    helm:
+      values: |
+        image:
+          tag: "2.13.5"
+
+        env:
+          PAPERLESS_URL: http://paperless.local  # ANPASSEN: Phase 4 → https://paperless.home.domain.com
+          PAPERLESS_TIME_ZONE: Europe/Berlin
+          PAPERLESS_OCR_LANGUAGE: deu+eng
+          PAPERLESS_CONSUMER_POLLING: "60"
+          PAPERLESS_CONSUMER_POLLING_RETRY_COUNT: "5"
+          PAPERLESS_TASK_WORKERS: "1"
+          PAPERLESS_THREADS_PER_WORKER: "1"
+          PAPERLESS_WEBSERVER_WORKERS: "1"
+
+        envFrom:
+          - secretRef:
+              name: paperless-secrets
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 768Mi
+
+        persistence:
+          data:
+            enabled: true
+            storageClass: nfs
+            size: 10Gi
+          media:
+            enabled: true
+            storageClass: nfs
+            size: 20Gi
+          export:
+            enabled: true
+            storageClass: nfs
+            size: 5Gi
+          consume:
+            enabled: true
+            storageClass: nfs
+            size: 2Gi
+
+        redis:
+          enabled: true
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+
+        postgresql:
+          enabled: true
+          primary:
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
+            persistence:
+              enabled: true
+              storageClass: nfs
+              size: 5Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: paperless

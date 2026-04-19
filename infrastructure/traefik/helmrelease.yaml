@@ -8,16 +8,89 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
-  sources:
-    - repoURL: https://traefik.github.io/charts
-      chart: traefik
-      targetRevision: "33.2.1"
-      helm:
-        valueFiles:
-          - $values/infrastructure/traefik/values.yaml
-    - repoURL: https://github.com/asmodaeus/homelab.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: "33.2.1"
+    helm:
+      values: |
+        deployment:
+          replicas: 1
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+
+        gateway:
+          enabled: true
+          name: homelab
+          namespace: "{{ .Release.Namespace }}"
+          annotations: {}
+          listeners:
+            web:
+              port: 8000
+              hostname: ""
+              protocol: HTTP
+              namespacePolicy: All
+            websecure:
+              port: 8443
+              hostname: ""
+              protocol: HTTPS
+              namespacePolicy: All
+              certificateRefs:
+                - name: wildcard-tls
+                  kind: Secret
+
+        gatewayClass:
+          enabled: true
+          name: traefik
+
+        ingressClass:
+          enabled: false
+          isDefaultClass: false
+
+        service:
+          enabled: true
+          type: LoadBalancer
+          annotations: {}
+
+        logs:
+          general:
+            level: INFO
+          access:
+            enabled: false
+
+        providers:
+          kubernetesGateway:
+            enabled: true
+          kubernetesIngress:
+            enabled: false
+
+        metrics:
+          prometheus:
+            enabled: true
+            addEntryPointsLabels: true
+            addRoutersLabels: true
+            addServicesLabels: true
+
+        ports:
+          web:
+            port: 8000
+            expose:
+              default: true
+            exposedPort: 80
+            protocol: TCP
+          websecure:
+            port: 8443
+            expose:
+              default: true
+            exposedPort: 443
+            protocol: TCP
+            tls:
+              enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
