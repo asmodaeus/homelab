@@ -1,0 +1,30 @@
+---
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: homelab
+
+servers: 1
+agents: 1
+
+options:
+  k3s:
+    extraArgs:
+      # Eigenes Traefik via ArgoCD wird installiert
+      - arg: --disable=traefik
+        nodeFilters: [server:*]
+      # Eigenes MetalLB via ArgoCD wird installiert
+      - arg: --disable=servicelb
+        nodeFilters: [server:*]
+
+# Port-Forwarding für lokalen Zugriff auf LoadBalancer-Services
+ports:
+  - port: 80:80
+    nodeFilters: [loadbalancer]
+  - port: 443:443
+    nodeFilters: [loadbalancer]
+
+# kubeconfig wird in ~/.kube/config gemergt
+kubeAPI:
+  hostIP: "0.0.0.0"
+  hostPort: "6443"
