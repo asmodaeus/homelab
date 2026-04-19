@@ -24,6 +24,11 @@ spec:
               operator: In
               values:
                 - "2"
+        - matchExpressions:
+            - key: sync-order
+              operator: In
+              values:
+                - "3"
   generators:
     - matrix:
         generators:
@@ -35,8 +40,10 @@ spec:
               elements:
                 - path: infrastructure
                   syncOrder: "1"
-                - path: apps
+                - path: config
                   syncOrder: "2"
+                - path: apps
+                  syncOrder: "3"
   template:
     metadata:
       name: '{{path}}'
