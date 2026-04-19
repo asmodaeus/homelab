@@ -8,6 +8,6 @@ metadata:
     argocd.argoproj.io/secret-type: repository
 stringData:
   name: lexfrei-charts
-  url: oci://ghcr.io/lexfrei/charts
+  url: ghcr.io/lexfrei/charts
   type: helm
   enableOCI: "true"

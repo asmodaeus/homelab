@@ -9,7 +9,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: oci://ghcr.io/lexfrei/charts
+    repoURL: ghcr.io/lexfrei/charts
     chart: system-upgrade-controller
     targetRevision: "0.2.7"
     helm:

@@ -15,8 +15,6 @@ configs:
     accounts.admin.enabled: "true"
     # Resource-Tracking via Annotations (stabiler als Labels)
     application.resourceTrackingMethod: annotation
-    # OCI Helm Registry Support aktivieren
-    HELM_OCI_ENABLED: "true"
 
 server:
   resources:
