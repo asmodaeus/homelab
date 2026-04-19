@@ -69,7 +69,7 @@
           -o jsonpath='{.data.password}' --kubeconfig={{ kubeconfig_path }} | base64 -d
 
     - name: Create ArgoCD cluster secret for ApplicationSet generator
-      ansible.builtin.shell:
+      ansible.builtin.command:
         cmd: kubectl apply -f - --kubeconfig={{ kubeconfig_path }}
         stdin: |
           apiVersion: v1
