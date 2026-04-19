@@ -5,7 +5,7 @@ metadata:
   name: homelab
   namespace: metallb-system
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   ipAddressPools:
     - homelab

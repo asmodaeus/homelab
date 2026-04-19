@@ -7,7 +7,7 @@ metadata:
   name: k3s-agent
   namespace: system-upgrade
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   concurrency: 1
   cordon: true

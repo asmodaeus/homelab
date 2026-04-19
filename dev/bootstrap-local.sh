@@ -68,7 +68,7 @@ fi
 echo "→ Wende root-app an (revision: $REVISION)..."
 ROOT_APP_MANIFEST="$REPO_ROOT/bootstrap/root-app.yaml"
 if [ "$REVISION" != "HEAD" ]; then
-  sed "s/targetRevision: HEAD/targetRevision: $REVISION/" "$ROOT_APP_MANIFEST" \
+  sed "s|targetRevision: HEAD|targetRevision: $REVISION|" "$ROOT_APP_MANIFEST" \
     | kubectl apply -f -
 else
   kubectl apply -f "$ROOT_APP_MANIFEST"
