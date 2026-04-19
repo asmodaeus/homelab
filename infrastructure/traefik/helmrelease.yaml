@@ -40,6 +40,7 @@ spec:
               hostname: ""
               protocol: HTTPS
               namespacePolicy: All
+              certificateRefs: []  # Phase 4: - name: wildcard-tls / kind: Secret
 
         gatewayClass:
           enabled: true

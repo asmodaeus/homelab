@@ -9,9 +9,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://charts.rancher.io
+    repoURL: oci://ghcr.io/lexfrei/charts
     chart: system-upgrade-controller
-    targetRevision: "109.0.0"
+    targetRevision: "0.2.7"
     helm:
       values: |
         resources:
