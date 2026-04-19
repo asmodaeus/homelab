@@ -9,10 +9,9 @@ metadata:
 spec:
   project: default
   source:
-    # Kein offizieller Helm-Repo vorhanden – Chart direkt aus GitHub
-    repoURL: https://github.com/rancher/system-upgrade-controller
-    targetRevision: v0.14.2
-    path: chart
+    repoURL: https://charts.rancher.io
+    chart: system-upgrade-controller
+    targetRevision: "109.0.0"
     helm:
       values: |
         resources:
