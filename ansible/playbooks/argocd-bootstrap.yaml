@@ -8,6 +8,17 @@
     kubeconfig_path: "{{ playbook_dir }}/../../kubeconfig"
 
   tasks:
+    - name: Load local.env if present (NAS_IP, NAS_PATH)
+      vars:
+        env_file: "{{ playbook_dir }}/../../local.env"
+      ansible.builtin.set_fact:
+        nas_ip: >-
+          {{ nas_ip | default(lookup('ini', 'NAS_IP type=properties file=' + env_file, errors='warn') | default('')) }}
+        nas_path: >-
+          {{ nas_path | default(
+             lookup('ini', 'NAS_PATH type=properties file=' + env_file, errors='warn')
+             | default('')) }}
+
     - name: Add ArgoCD Helm repo
       ansible.builtin.command:
         cmd: helm repo add argo https://argoproj.github.io/argo-helm
@@ -84,6 +95,8 @@
             annotations:
               targetRevision: "{{ argocd_target_revision | default('HEAD') }}"
               repoURL: "https://github.com/asmodaeus/homelab.git"
+              nasIP: "{{ nas_ip }}"
+              nasPath: "{{ nas_path }}"
           stringData:
             name: in-cluster
             server: https://kubernetes.default.svc
