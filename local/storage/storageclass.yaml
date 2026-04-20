@@ -1,0 +1,10 @@
+---
+# Lokaler Ersatz für den NFS-Provisioner: StorageClass "nfs" zeigt auf
+# local-path (k3s built-in). Nur für homelab-env: local (k3d).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
