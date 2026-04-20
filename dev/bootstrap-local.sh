@@ -16,6 +16,18 @@
 
 set -euo pipefail
 
+# --- Lokale Konfiguration laden ---
+LOCAL_ENV="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/local.env"
+if [ -f "$LOCAL_ENV" ]; then
+  # shellcheck source=/dev/null
+  source "$LOCAL_ENV"
+else
+  echo "HINWEIS: Keine local.env gefunden – NAS-Storage nicht verfügbar."
+  echo "  cp local.env.example local.env && vim local.env"
+fi
+NAS_IP="${NAS_IP:-}"
+NAS_PATH="${NAS_PATH:-}"
+
 CLUSTER_NAME="homelab"
 CURRENT_BRANCH=$(git -C "$(dirname "$0")/.." rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
 REVISION="${REVISION:-$CURRENT_BRANCH}"
@@ -128,7 +140,7 @@ else
     --wait --timeout 5m
 fi
 
-# --- Cluster-Secret setzen (repoURL + targetRevision + homelab-env=local) ---
+# --- Cluster-Secret setzen (repoURL + targetRevision + nasIP + homelab-env=local) ---
 # Nicht von ArgoCD verwaltet – selfHeal überschreibt es nicht.
 echo "→ Setze Cluster-Secret (revision: $REVISION, repo: Gitea)..."
 kubectl apply -f - <<EOF
@@ -144,6 +156,8 @@ metadata:
   annotations:
     targetRevision: "$REVISION"
     repoURL: "$GITEA_CLUSTER_URL/$GITEA_USER/$GITEA_REPO.git"
+    nasIP: "$NAS_IP"
+    nasPath: "$NAS_PATH"
 stringData:
   name: in-cluster
   server: https://kubernetes.default.svc

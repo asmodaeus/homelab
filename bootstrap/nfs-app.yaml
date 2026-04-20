@@ -1,0 +1,53 @@
+---
+# NFS Provisioner als eigenes ApplicationSet, damit nasIP/nasPath
+# aus dem Cluster-Secret gelesen werden können (nicht in Git).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nfs-provisioner
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            homelab-cluster: "true"
+  template:
+    metadata:
+      name: nfs-provisioner
+      namespace: argocd
+      labels:
+        sync-order: "1"
+    spec:
+      project: default
+      source:
+        repoURL: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+        chart: nfs-subdir-external-provisioner
+        targetRevision: "4.0.18"
+        helm:
+          valuesObject:
+            nfs:
+              server: '{{ index .metadata.annotations "nasIP" }}'
+              path: '{{ index .metadata.annotations "nasPath" }}'
+            storageClass:
+              name: nfs
+              defaultClass: true
+              reclaimPolicy: Retain
+              archiveOnDelete: true
+            resources:
+              requests:
+                cpu: 50m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
+      destination:
+        server: '{{ .server }}'
+        namespace: nfs-provisioner
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

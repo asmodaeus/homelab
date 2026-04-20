@@ -66,7 +66,7 @@ ansible-playbook playbooks/k3s-install.yaml
 scp pi@<pi4-ip>:~/.kube/config ~/.kube/config
 kubectl get nodes
 
-# 6. ArgoCD bootstrappen (setzt Cluster-Secret mit repoURL + homelab-env: production)
+# 6. ArgoCD bootstrappen (liest NAS-IP automatisch aus local.env)
 ansible-playbook playbooks/argocd-bootstrap.yaml
 
 # 7. Root-App anwenden (einmalig manuell)
@@ -97,6 +97,19 @@ direkt aus dem lokalen Gitea – kein Commit auf GitHub nötig.
 ```bash
 brew install k3d kubectl helm docker jq git
 ```
+
+### Lokale Konfiguration (einmalig)
+
+Sensitive Werte wie die NAS-IP werden nicht in Git gespeichert, sondern in einer
+lokalen Datei die von `.gitignore` ausgeschlossen ist:
+
+```bash
+cp local.env.example local.env
+vim local.env   # NAS_IP und NAS_PATH eintragen
+```
+
+Ohne `local.env` startet das Cluster trotzdem – NFS-Storage ist dann nicht
+verfügbar und Apps die PVCs benötigen bleiben pending.
 
 ### Ersteinrichtung
 
