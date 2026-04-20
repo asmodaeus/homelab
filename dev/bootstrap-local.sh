@@ -2,43 +2,45 @@
 # Lokales K3d-Cluster für homelab-Entwicklung
 #
 # Voraussetzungen:
-#   brew install k3d kubectl helm docker jq   (macOS)
-#   oder entsprechende Linux-Pakete
+#   brew install k3d kubectl helm docker jq git   (macOS)
 #
 # Nutzung:
-#   ./dev/bootstrap-local.sh                    # HEAD von main
+#   ./dev/bootstrap-local.sh                    # aktuellen Branch deployen
 #   REVISION=my-feature-branch ./dev/bootstrap-local.sh
 #
 # Einschränkungen gegenüber echtem Cluster:
 #   - Architektur: x86_64 statt ARM64
 #   - NFS Storage: nicht verfügbar → local-path-provisioner als Fallback
-#     (PVCs mit storageClass: nfs bleiben Pending ohne lokalen NFS-Server)
 #   - MetalLB IPs: Docker-Subnetz statt echtes LAN
-#     Direkter Zugriff via IP erfordert: sudo ip route add <subnet> via <gw>
-#     Einfacher: kubectl port-forward (siehe Ausgabe am Ende)
+#   - k3s-Upgrade-Plans werden nicht deployed (homelab-env=local)
 
 set -euo pipefail
 
 CLUSTER_NAME="homelab"
-REVISION="${REVISION:-HEAD}"
-REPO_URL="https://github.com/asmodaeus/homelab.git"
+CURRENT_BRANCH=$(git -C "$(dirname "$0")/.." rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+REVISION="${REVISION:-$CURRENT_BRANCH}"
+GITHUB_URL="https://github.com/asmodaeus/homelab.git"
+GITEA_USER="gitea"
+GITEA_PASS="gitea"
+GITEA_REPO="homelab"
+GITEA_LOCAL_URL="http://localhost:3000"
+GITEA_CLUSTER_URL="http://gitea-http.gitea.svc:3000"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # --- Voraussetzungen prüfen ---
 echo "→ Prüfe Voraussetzungen..."
 missing=()
-for cmd in k3d kubectl helm docker jq; do
+for cmd in k3d kubectl helm docker jq git; do
   command -v "$cmd" &>/dev/null || missing+=("$cmd")
 done
 if [ ${#missing[@]} -gt 0 ]; then
   echo "FEHLER: Folgende Tools fehlen: ${missing[*]}"
   echo "  macOS:  brew install ${missing[*]}"
-  echo "  Linux:  siehe https://k3d.io/installation"
   exit 1
 fi
 
-# Cluster ggf. vorher bereinigen
+# --- Cluster erstellen ---
 if k3d cluster list | grep -q "^$CLUSTER_NAME"; then
   echo "→ Cluster '$CLUSTER_NAME' existiert bereits – überspringe Erstellung"
 else
@@ -49,11 +51,66 @@ fi
 echo "→ Warte auf Node-Readiness..."
 kubectl wait --for=condition=Ready node --all --timeout=120s
 
+# --- Gitea installieren ---
+helm repo add gitea https://dl.gitea.com/charts/ --force-update 2>/dev/null
+kubectl create namespace gitea --dry-run=client -o yaml | kubectl apply -f -
+if helm status gitea -n gitea &>/dev/null 2>&1; then
+  echo "→ Gitea bereits installiert – überspringe"
+else
+  echo "→ Installiere Gitea (lokaler Git-Server)..."
+  helm upgrade --install gitea gitea/gitea \
+    --namespace gitea \
+    --version "10.6.0" \
+    --set "gitea.admin.username=$GITEA_USER" \
+    --set "gitea.admin.password=$GITEA_PASS" \
+    --set "gitea.admin.email=gitea@local.dev" \
+    --set "gitea.config.database.DB_TYPE=sqlite3" \
+    --set "gitea.config.session.PROVIDER=memory" \
+    --set "gitea.config.cache.ADAPTER=memory" \
+    --set "gitea.config.queue.TYPE=level" \
+    --set "service.http.type=LoadBalancer" \
+    --set "service.http.port=3000" \
+    --set "persistence.enabled=true" \
+    --set "persistence.storageClass=local-path" \
+    --set "persistence.size=1Gi" \
+    --set "resources.requests.cpu=50m" \
+    --set "resources.requests.memory=128Mi" \
+    --set "resources.limits.memory=256Mi" \
+    --set "redis-cluster.enabled=false" \
+    --set "postgresql.enabled=false" \
+    --wait --timeout 5m
+fi
+
+# --- Warten bis Gitea erreichbar ist ---
+echo "→ Warte bis Gitea auf localhost:3000 erreichbar ist..."
+for i in $(seq 1 30); do
+  if curl -sf "$GITEA_LOCAL_URL/api/v1/version" &>/dev/null; then
+    break
+  fi
+  [ "$i" -eq 30 ] && echo "FEHLER: Gitea nicht erreichbar nach 5 Minuten" && exit 1
+  sleep 10
+done
+
+# --- Gitea-Repo anlegen und Branch pushen ---
+echo "→ Richte Gitea-Repo ein (revision: $REVISION)..."
+curl -sf -X POST "$GITEA_LOCAL_URL/api/v1/user/repos" \
+  -u "$GITEA_USER:$GITEA_PASS" \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"$GITEA_REPO\",\"auto_init\":false,\"private\":false}" \
+  >/dev/null 2>&1 || true  # ignorieren falls Repo bereits existiert
+
+GITEA_REMOTE="http://$GITEA_USER:$GITEA_PASS@localhost:3000/$GITEA_USER/$GITEA_REPO.git"
+git -C "$REPO_ROOT" remote add local "$GITEA_REMOTE" 2>/dev/null || \
+  git -C "$REPO_ROOT" remote set-url local "$GITEA_REMOTE"
+
+echo "→ Pushe Branch '$REVISION' nach Gitea..."
+git -C "$REPO_ROOT" push local "HEAD:refs/heads/$REVISION" --force
+
 # --- ArgoCD installieren (nur beim ersten Mal; danach self-managed via GitOps) ---
 helm repo add argo https://argoproj.github.io/argo-helm --force-update 2>/dev/null
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 if helm status argocd -n argocd &>/dev/null 2>&1; then
-  echo "→ ArgoCD bereits installiert – überspringe Helm-Upgrade (self-managed)"
+  echo "→ ArgoCD bereits installiert – überspringe (self-managed)"
 else
   echo "→ Installiere ArgoCD..."
   helm upgrade --install argocd argo/argo-cd \
@@ -64,9 +121,9 @@ else
     --wait --timeout 5m
 fi
 
-# --- Cluster-Secret für ApplicationSet setzen (trägt targetRevision) ---
-# Dieses Secret wird nicht von ArgoCD verwaltet – selfHeal überschreibt es nicht.
-echo "→ Setze Cluster-Secret (revision: $REVISION)..."
+# --- Cluster-Secret setzen (repoURL + targetRevision + homelab-env=local) ---
+# Nicht von ArgoCD verwaltet – selfHeal überschreibt es nicht.
+echo "→ Setze Cluster-Secret (revision: $REVISION, repo: Gitea)..."
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
@@ -79,20 +136,19 @@ metadata:
     homelab-env: local
   annotations:
     targetRevision: "$REVISION"
+    repoURL: "$GITEA_CLUSTER_URL/$GITEA_USER/$GITEA_REPO.git"
 stringData:
   name: in-cluster
   server: https://kubernetes.default.svc
   config: '{"tlsClientConfig":{"insecure":false}}'
 EOF
 
-# --- Root-App anwenden (optional: branch/tag überschreiben) ---
-echo "→ Wende root-app an (revision: $REVISION)..."
-if [ "$REVISION" != "HEAD" ]; then
-  sed "s|targetRevision: HEAD|targetRevision: $REVISION|" \
-    "$REPO_ROOT/bootstrap/root-app.yaml" | kubectl apply -f -
-else
-  kubectl apply -f "$REPO_ROOT/bootstrap/root-app.yaml"
-fi
+# --- Root-App anwenden (Gitea-URL + Branch) ---
+echo "→ Wende root-app an (repo: Gitea, revision: $REVISION)..."
+sed \
+  -e "s|repoURL: https://github.com/asmodaeus/homelab.git|repoURL: $GITEA_CLUSTER_URL/$GITEA_USER/$GITEA_REPO.git|" \
+  -e "s|targetRevision: HEAD|targetRevision: $REVISION|" \
+  "$REPO_ROOT/bootstrap/root-app.yaml" | kubectl apply -f -
 
 # --- Warten bis MetalLB controller läuft ---
 echo "→ Warte auf MetalLB (kann 2-3 Minuten dauern)..."
@@ -139,25 +195,24 @@ ARGOCD_PW=$(kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' 2>/dev/null | base64 -d || echo "<noch nicht bereit>")
 
 echo ""
-echo "╔═══════════════════════════════════════════════════════════════╗"
-echo "║           Lokales Homelab-Cluster ist bereit!                 ║"
-echo "╠═══════════════════════════════════════════════════════════════╣"
-echo "║  ArgoCD Port-Forward:                                         ║"
-echo "║    kubectl port-forward -n argocd svc/argocd-server 8080:80  ║"
-echo "║    → http://localhost:8080                                    ║"
-printf "║  Login: admin / %-47s║\n" "$ARGOCD_PW"
-echo "╠═══════════════════════════════════════════════════════════════╣"
-echo "║  MetalLB IP-Range: $METALLB_RANGE"
-echo "║  (Direktzugriff via IP: sudo ip route add $DOCKER_SUBNET via $BASE.1)"
-echo "╠═══════════════════════════════════════════════════════════════╣"
-echo "║  NFS Storage: Pending ohne lokalen NFS-Server                 ║"
-echo "║  Fallback:    kubectl patch storageclass nfs                  ║"
-echo "║               -p '{\"metadata\":{\"annotations\":{            ║"
-echo "║               \"storageclass.kubernetes.io/is-default-class\": ║"
-echo "║               \"false\"}}}'                                    ║"
-echo "║               → local-path bleibt dann Default               ║"
-echo "╠═══════════════════════════════════════════════════════════════╣"
-echo "║  Teardown: ./dev/teardown-local.sh                            ║"
-echo "╚═══════════════════════════════════════════════════════════════╝"
+echo "╔════════════════════════════════════════════════════════════════════╗"
+echo "║           Lokales Homelab-Cluster ist bereit!                      ║"
+echo "╠════════════════════════════════════════════════════════════════════╣"
+echo "║  Gitea (lokaler Git-Server):                                       ║"
+echo "║    http://localhost:3000                                           ║"
+printf "║    Login: %-58s║\n" "$GITEA_USER / $GITEA_PASS"
+echo "║    Remote: git push local                                          ║"
+echo "╠════════════════════════════════════════════════════════════════════╣"
+echo "║  ArgoCD:                                                           ║"
+echo "║    kubectl port-forward -n argocd svc/argocd-server 8080:80       ║"
+echo "║    → http://localhost:8080                                         ║"
+printf "║    Login: admin / %-50s║\n" "$ARGOCD_PW"
+echo "╠════════════════════════════════════════════════════════════════════╣"
+echo "║  Development Loop:                                                 ║"
+echo "║    git add -A && git commit -m 'my change'                        ║"
+echo "║    git push local   ← ArgoCD synct in ~30s                        ║"
+echo "╠════════════════════════════════════════════════════════════════════╣"
+echo "║  Teardown: ./dev/teardown-local.sh                                 ║"
+echo "╚════════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Tipp: REVISION=<branch> $0   → anderen Branch testen"

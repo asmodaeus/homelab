@@ -1,10 +1,11 @@
 ---
-# Generiert Applications für infrastructure/ config/ apps/ und production/.
-# targetRevision wird aus dem Cluster-Secret "homelab-cluster" gelesen,
-# das vom bootstrap-local.sh gesetzt wird — nicht von ArgoCD verwaltet.
+# Generiert Applications für alle Verzeichnisse dynamisch.
+# repoURL + targetRevision werden aus dem Cluster-Secret "homelab-cluster" gelesen
+# (vom bootstrap-local.sh bzw. Ansible gesetzt — nicht von ArgoCD verwaltet).
 #
 # Cluster-Labels steuern was deployed wird:
 #   homelab-cluster: "true"       → alle Cluster (lokal + produktion)
+#   homelab-env: local            → nur lokaler k3d-Cluster (z.B. Gitea)
 #   homelab-env: production       → nur Pi-Cluster (z.B. k3s-Upgrade-Plans)
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -22,6 +23,10 @@ spec:
         - matchExpressions:
             - key: sync-order
               operator: In
+              values: ["0"]
+        - matchExpressions:
+            - key: sync-order
+              operator: In
               values: ["1"]
         - matchExpressions:
             - key: sync-order
@@ -32,6 +37,20 @@ spec:
               operator: In
               values: ["3"]
   generators:
+    # Nur lokal: Gitea und andere lokale Hilfsdienste
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  homelab-cluster: "true"
+                  homelab-env: local
+          - list:
+              elements:
+                - appName: local
+                  path: local
+                  syncOrder: "0"
+                  exclude: ""
     # Alle Cluster: infrastructure, config (ohne system-upgrade), apps
     - matrix:
         generators:
@@ -76,7 +95,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/asmodaeus/homelab.git
+        repoURL: '{{ index .metadata.annotations "repoURL" }}'
         targetRevision: '{{ index .metadata.annotations "targetRevision" }}'
         path: '{{ .path }}'
         directory:
