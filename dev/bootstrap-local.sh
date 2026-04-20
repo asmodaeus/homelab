@@ -49,25 +49,49 @@ fi
 echo "→ Warte auf Node-Readiness..."
 kubectl wait --for=condition=Ready node --all --timeout=120s
 
-# --- ArgoCD installieren ---
-echo "→ Installiere ArgoCD..."
+# --- ArgoCD installieren (nur beim ersten Mal; danach self-managed via GitOps) ---
 helm repo add argo https://argoproj.github.io/argo-helm --force-update 2>/dev/null
 kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-helm upgrade --install argocd argo/argo-cd \
-  --namespace argocd \
-  --version "7.7.16" \
-  -f "$REPO_ROOT/bootstrap/argocd/values.yaml" \
-  --set "global.image.tag=v2.13.3" \
-  --wait --timeout 5m
+if helm status argocd -n argocd &>/dev/null 2>&1; then
+  echo "→ ArgoCD bereits installiert – überspringe Helm-Upgrade (self-managed)"
+else
+  echo "→ Installiere ArgoCD..."
+  helm upgrade --install argocd argo/argo-cd \
+    --namespace argocd \
+    --version "7.7.16" \
+    -f "$REPO_ROOT/bootstrap/argocd/values.yaml" \
+    --set "global.image.tag=v2.13.3" \
+    --wait --timeout 5m
+fi
+
+# --- Cluster-Secret für ApplicationSet setzen (trägt targetRevision) ---
+# Dieses Secret wird nicht von ArgoCD verwaltet – selfHeal überschreibt es nicht.
+echo "→ Setze Cluster-Secret (revision: $REVISION)..."
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: homelab-cluster
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+    homelab-cluster: "true"
+    homelab-env: local
+  annotations:
+    targetRevision: "$REVISION"
+stringData:
+  name: in-cluster
+  server: https://kubernetes.default.svc
+  config: '{"tlsClientConfig":{"insecure":false}}'
+EOF
 
 # --- Root-App anwenden (optional: branch/tag überschreiben) ---
 echo "→ Wende root-app an (revision: $REVISION)..."
-ROOT_APP_MANIFEST="$REPO_ROOT/bootstrap/root-app.yaml"
 if [ "$REVISION" != "HEAD" ]; then
-  sed "s/targetRevision: HEAD/targetRevision: $REVISION/" "$ROOT_APP_MANIFEST" \
-    | kubectl apply -f -
+  sed "s|targetRevision: HEAD|targetRevision: $REVISION|" \
+    "$REPO_ROOT/bootstrap/root-app.yaml" | kubectl apply -f -
 else
-  kubectl apply -f "$ROOT_APP_MANIFEST"
+  kubectl apply -f "$REPO_ROOT/bootstrap/root-app.yaml"
 fi
 
 # --- Warten bis MetalLB controller läuft ---
@@ -77,6 +101,16 @@ for i in $(seq 1 30); do
     kubectl wait --for=condition=Available deployment/controller \
       -n metallb-system --timeout=120s && break
   fi
+  sleep 10
+done
+
+# --- Warten bis MetalLB CRDs registriert sind ---
+echo "→ Warte auf MetalLB CRDs..."
+for i in $(seq 1 30); do
+  if kubectl get crd ipaddresspools.metallb.io &>/dev/null 2>&1; then
+    break
+  fi
+  [ "$i" -eq 30 ] && echo "WARNUNG: MetalLB CRDs nach 5 Minuten noch nicht bereit" && break
   sleep 10
 done
 

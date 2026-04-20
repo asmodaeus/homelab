@@ -1,25 +1,17 @@
 ---
-# Automatisches K3s-Upgrade für Agent Nodes (Pi 3)
-# Wartet auf Server-Upgrade bevor Agent upgradet wird
+# Automatisches K3s-Upgrade für Control Plane Nodes (Pi 4)
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
-  name: k3s-agent
+  name: k3s-server
   namespace: system-upgrade
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
 spec:
   concurrency: 1
   cordon: true
   nodeSelector:
     matchExpressions:
       - key: node-role.kubernetes.io/control-plane
-        operator: DoesNotExist
-  prepare:
-    image: rancher/k3s-upgrade
-    args:
-      - prepare
-      - k3s-server  # Warte bis Server-Plan abgeschlossen
+        operator: Exists
   serviceAccountName: system-upgrade
   upgrade:
     image: rancher/k3s-upgrade
