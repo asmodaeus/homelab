@@ -63,6 +63,17 @@ fi
 echo "→ Warte auf Node-Readiness..."
 kubectl wait --for=condition=Ready node --all --timeout=120s
 
+# --- Agent-Node als Zigbee-Node konfigurieren (simuliert Pi 3) ---
+# Setzt dasselbe Label/Taint wie in Produktion, damit Mosquitto + Zigbee2MQTT schedulebar sind.
+# Die Pods starten, USB-Gerät fehlt aber – Zigbee2MQTT wird crashen, Mosquitto läuft.
+AGENT_NODE=$(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' \
+  --no-headers -o name 2>/dev/null | head -1)
+if [ -n "$AGENT_NODE" ]; then
+  echo "→ Konfiguriere $AGENT_NODE als Zigbee-Node (simuliert Pi 3)..."
+  kubectl label "$AGENT_NODE" homelab/zigbee-adapter=true workload=light --overwrite
+  kubectl taint "$AGENT_NODE" workload=light:NoSchedule --overwrite 2>/dev/null || true
+fi
+
 # --- Gitea installieren ---
 helm repo add gitea https://dl.gitea.com/charts/ --force-update 2>/dev/null
 kubectl create namespace gitea --dry-run=client -o yaml | kubectl apply -f -
