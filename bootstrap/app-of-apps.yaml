@@ -81,9 +81,7 @@ spec:
         path: '{{ .path }}'
         directory:
           recurse: true
-          {{- if .exclude }}
           exclude: '{{ .exclude }}'
-          {{- end }}
       destination:
         server: https://kubernetes.default.svc
         namespace: argocd

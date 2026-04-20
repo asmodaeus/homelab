@@ -71,6 +71,7 @@ jobs:
           find . -name '*.yaml' \
             ! -path './.github/*' \
             ! -path './ansible/*' \
+            ! -path './bootstrap/*' \
             ! -name 'renovate.json' \
             ! -name '.yamllint.yaml' \
             ! -name '.kube-linter.yaml' \
