@@ -48,6 +48,8 @@ spec:
           enabled: false
         postgresql:
           enabled: false
+        postgresql-ha:
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: gitea

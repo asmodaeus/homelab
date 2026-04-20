@@ -78,6 +78,7 @@ else
     --set "resources.limits.memory=256Mi" \
     --set "redis-cluster.enabled=false" \
     --set "postgresql.enabled=false" \
+    --set "postgresql-ha.enabled=false" \
     --wait --timeout 5m
 fi
 
