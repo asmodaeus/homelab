@@ -76,6 +76,7 @@ metadata:
   labels:
     argocd.argoproj.io/secret-type: cluster
     homelab-cluster: "true"
+    homelab-env: local
   annotations:
     targetRevision: "$REVISION"
 stringData:

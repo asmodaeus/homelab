@@ -1,7 +1,11 @@
 ---
-# Generiert Applications für infrastructure/ und apps/ dynamisch.
+# Generiert Applications für infrastructure/ config/ apps/ und production/.
 # targetRevision wird aus dem Cluster-Secret "homelab-cluster" gelesen,
 # das vom bootstrap-local.sh gesetzt wird — nicht von ArgoCD verwaltet.
+#
+# Cluster-Labels steuern was deployed wird:
+#   homelab-cluster: "true"       → alle Cluster (lokal + produktion)
+#   homelab-env: production       → nur Pi-Cluster (z.B. k3s-Upgrade-Plans)
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -10,6 +14,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
+  goTemplate: true
   strategy:
     type: RollingSync
     rollingSync:
@@ -17,19 +22,17 @@ spec:
         - matchExpressions:
             - key: sync-order
               operator: In
-              values:
-                - "1"
+              values: ["1"]
         - matchExpressions:
             - key: sync-order
               operator: In
-              values:
-                - "2"
+              values: ["2"]
         - matchExpressions:
             - key: sync-order
               operator: In
-              values:
-                - "3"
+              values: ["3"]
   generators:
+    # Alle Cluster: infrastructure, config (ohne system-upgrade), apps
     - matrix:
         generators:
           - clusters:
@@ -38,26 +41,49 @@ spec:
                   homelab-cluster: "true"
           - list:
               elements:
-                - path: infrastructure
+                - appName: infrastructure
+                  path: infrastructure
                   syncOrder: "1"
-                - path: config
+                  exclude: ""
+                - appName: config
+                  path: config
                   syncOrder: "2"
-                - path: apps
+                  exclude: "system-upgrade/**"
+                - appName: apps
+                  path: apps
                   syncOrder: "3"
+                  exclude: ""
+    # Nur Production: config/system-upgrade (k3s-Upgrade-Plans)
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  homelab-cluster: "true"
+                  homelab-env: production
+          - list:
+              elements:
+                - appName: config-system-upgrade
+                  path: config/system-upgrade
+                  syncOrder: "2"
+                  exclude: ""
   template:
     metadata:
-      name: '{{path}}'
+      name: '{{ .appName }}'
       namespace: argocd
       labels:
-        sync-order: '{{syncOrder}}'
+        sync-order: '{{ .syncOrder }}'
     spec:
       project: default
       source:
         repoURL: https://github.com/asmodaeus/homelab.git
-        targetRevision: '{{metadata.annotations.targetRevision}}'
-        path: '{{path}}'
+        targetRevision: '{{ index .metadata.annotations "targetRevision" }}'
+        path: '{{ .path }}'
         directory:
           recurse: true
+          {{- if .exclude }}
+          exclude: '{{ .exclude }}'
+          {{- end }}
       destination:
         server: https://kubernetes.default.svc
         namespace: argocd

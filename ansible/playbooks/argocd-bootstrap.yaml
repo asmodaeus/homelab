@@ -80,6 +80,7 @@
             labels:
               argocd.argoproj.io/secret-type: cluster
               homelab-cluster: "true"
+              homelab-env: production
             annotations:
               targetRevision: "{{ argocd_target_revision | default('HEAD') }}"
           stringData:
