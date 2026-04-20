@@ -83,6 +83,7 @@
               homelab-env: production
             annotations:
               targetRevision: "{{ argocd_target_revision | default('HEAD') }}"
+              repoURL: "https://github.com/asmodaeus/homelab.git"
           stringData:
             name: in-cluster
             server: https://kubernetes.default.svc
