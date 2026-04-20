@@ -9,9 +9,15 @@
 
   tasks:
     - name: Load local.env if present (NAS_IP, NAS_PATH)
+      vars:
+        env_file: "{{ playbook_dir }}/../../local.env"
       ansible.builtin.set_fact:
-        nas_ip: "{{ nas_ip | default(lookup('ini', 'NAS_IP type=properties file=' + playbook_dir + '/../../local.env', errors='warn') | default('')) }}"
-        nas_path: "{{ nas_path | default(lookup('ini', 'NAS_PATH type=properties file=' + playbook_dir + '/../../local.env', errors='warn') | default('')) }}"
+        nas_ip: >-
+          {{ nas_ip | default(lookup('ini', 'NAS_IP type=properties file=' + env_file, errors='warn') | default('')) }}
+        nas_path: >-
+          {{ nas_path | default(
+             lookup('ini', 'NAS_PATH type=properties file=' + env_file, errors='warn')
+             | default('')) }}
 
     - name: Add ArgoCD Helm repo
       ansible.builtin.command:
