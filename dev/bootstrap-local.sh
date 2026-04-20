@@ -82,7 +82,13 @@ else
     --wait --timeout 5m
 fi
 
-# --- Warten bis Gitea erreichbar ist ---
+# --- Gitea per port-forward erreichbar machen (MetalLB noch nicht bereit) ---
+echo "→ Starte port-forward für Gitea (MetalLB noch nicht aktiv)..."
+kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=gitea -n gitea --timeout=120s
+kubectl port-forward -n gitea svc/gitea-http 3000:3000 &>/dev/null &
+PF_PID=$!
+trap "kill $PF_PID 2>/dev/null || true" EXIT
+
 echo "→ Warte bis Gitea auf localhost:3000 erreichbar ist..."
 for i in $(seq 1 30); do
   if curl -sf "$GITEA_LOCAL_URL/api/v1/version" &>/dev/null; then
