@@ -71,8 +71,9 @@ spec:
                 - appName: apps
                   path: apps
                   syncOrder: "3"
-                  exclude: ""
+                  exclude: "{home-assistant/mosquitto,home-assistant/zigbee2mqtt}/**"
     # Nur Production: config/system-upgrade (k3s-Upgrade-Plans)
+    # und Zigbee-Stack (braucht USB-Hardware, lokal nicht verfügbar)
     - matrix:
         generators:
           - clusters:
@@ -85,6 +86,14 @@ spec:
                 - appName: config-system-upgrade
                   path: config/system-upgrade
                   syncOrder: "2"
+                  exclude: ""
+                - appName: mosquitto
+                  path: apps/home-assistant/mosquitto
+                  syncOrder: "3"
+                  exclude: ""
+                - appName: zigbee2mqtt
+                  path: apps/home-assistant/zigbee2mqtt
+                  syncOrder: "3"
                   exclude: ""
   template:
     metadata:
