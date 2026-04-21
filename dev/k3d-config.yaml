@@ -16,6 +16,13 @@ options:
       # Eigenes MetalLB via ArgoCD wird installiert
       - arg: --disable=servicelb
         nodeFilters: [server:*]
+      # Agent-Node simuliert Pi 3 (Zigbee-Adapter) – Labels + Taint wie in Produktion
+      - arg: --node-label=homelab/zigbee-adapter=true
+        nodeFilters: [agent:0]
+      - arg: --node-label=workload=light
+        nodeFilters: [agent:0]
+      - arg: --node-taint=workload=light:NoSchedule
+        nodeFilters: [agent:0]
 
 # Port-Forwarding für lokalen Zugriff auf LoadBalancer-Services
 ports:
