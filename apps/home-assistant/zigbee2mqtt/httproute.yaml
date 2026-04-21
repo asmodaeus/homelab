@@ -9,7 +9,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   parentRefs:
-    - name: homelab
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab
       namespace: traefik
       sectionName: web
   hostnames:
@@ -20,5 +22,8 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: zigbee2mqtt
+        - group: ""
+          kind: Service
+          name: zigbee2mqtt
           port: 8080
+          weight: 1
