@@ -42,18 +42,22 @@ spec:
           data:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 10Gi
           media:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 20Gi
           export:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 5Gi
           consume:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 2Gi
 
         redis:
