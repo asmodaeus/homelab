@@ -1,0 +1,41 @@
+---
+name: Integration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: "Branch/Tag/SHA to test"
+        default: "main"
+        required: true
+
+jobs:
+  integration:
+    name: k3d Cluster Integration Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision }}
+
+      - name: Install k3d
+        run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.16.3"
+
+      - name: Bootstrap cluster
+        run: CI=true REVISION=${{ inputs.revision }} ./dev/bootstrap-local.sh
+
+      - name: Run smoke tests
+        run: CI=true ./dev/test-local.sh
+
+      - name: Teardown
+        if: always()
+        run: k3d cluster delete homelab || true
