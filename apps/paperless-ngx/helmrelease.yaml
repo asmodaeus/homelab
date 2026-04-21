@@ -26,6 +26,7 @@ spec:
           PAPERLESS_TASK_WORKERS: "1"
           PAPERLESS_THREADS_PER_WORKER: "1"
           PAPERLESS_WEBSERVER_WORKERS: "1"
+          PAPERLESS_REDIS: redis://paperless-redis:6379
 
         envFrom:
           - secretRef:
@@ -61,14 +62,7 @@ spec:
             size: 2Gi
 
         redis:
-          enabled: true
-          auth:
-            enabled: false
-          master:
-            persistence:
-              enabled: false
-          replica:
-            replicaCount: 0
+          enabled: false
 
         postgresql:
           enabled: false
