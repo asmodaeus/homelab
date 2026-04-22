@@ -26,7 +26,7 @@ Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Tolerat
 
 ## Apps
 
-- **Paperless-ngx** – Dokumentenmanagement (NFS Storage, SQLite, eigenes `redis.yaml` statt Subchart)
+- **Paperless-ngx** – Dokumentenmanagement (NFS Storage)
 - **Home Assistant** – Heimautomatisierung
 - **Zigbee2MQTT** – Zigbee Bridge (nodeSelector: `homelab/zigbee-adapter=true` → Pi 3, nur Produktion)
 - **Mosquitto** – MQTT Broker (Pi 3 mit Zigbee2MQTT, nur Produktion)
@@ -39,28 +39,6 @@ Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Tolerat
 - Resource Limits auf allen Workloads setzen
 - ARM64-Kompatibilität vor neuen Images prüfen (`docker manifest inspect <image>`)
 - Pi 3 hat nur 1GB RAM – keine schweren Workloads ohne Toleration für `workload=light`
-
-### Gateway API HTTPRoutes
-
-Immer `group` und `kind` in `parentRefs` **und** `group`, `kind`, `weight` in `backendRefs` explizit setzen.
-Kubernetes fügt diese Felder beim Apply als Defaults hinzu – ohne sie zeigt ArgoCD dauerhaft OutOfSync-Diffs.
-
-```yaml
-spec:
-  parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: homelab
-      namespace: traefik
-      sectionName: web
-  rules:
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: <service-name>
-          port: <port>
-          weight: 1
-```
 
 ### Lokaler Cluster (k3d) vs. Produktion
 
@@ -124,7 +102,6 @@ Der Workflow `.github/workflows/ci-integration.yaml` startet ein k3d-Cluster in 
 | `infrastructure/metallb/ip-address-pool.yaml` | MetalLB IP-Range (im Router-DHCP ausschließen!) |
 | `infrastructure/nfs-provisioner/values.yaml` | NAS-IP + NFS-Pfad (vor Phase 2 ausfüllen) |
 | `apps/home-assistant/zigbee2mqtt/deployment.yaml` | USB-Device-Path (muss mit `ls /dev/ttyUSB* /dev/ttyACM*` geprüft werden) |
-| `apps/paperless-ngx/redis.yaml` | Standalone Redis (kein Helm-Subchart – Bitnami-Images nicht auf Docker Hub verfügbar) |
 
 ## Befehle
 
