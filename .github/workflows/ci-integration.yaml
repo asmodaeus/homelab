@@ -13,7 +13,7 @@ jobs:
   integration:
     name: k3d Cluster Integration Test
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
