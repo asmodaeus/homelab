@@ -47,7 +47,8 @@ Pi 3 hat `NoSchedule`-Taint `workload=light` – nur Pods mit expliziter Tolerat
 | `bootstrap/root-app.yaml` | Einzige manuell angewendete Ressource – Schlüsselstein des GitOps-Systems |
 | `ansible/inventory/hosts.yaml` | Pi-IPs und Rollen (muss vor Bootstrap ausgefüllt sein) |
 | `infrastructure/metallb/ip-address-pool.yaml` | MetalLB IP-Range (im Router-DHCP ausschließen!) |
-| `infrastructure/nfs-provisioner/values.yaml` | NAS-IP + NFS-Pfad (vor Phase 2 ausfüllen) |
+| `bootstrap/nfs-app.yaml` | NFS-Provisioner liest NAS-IP + NFS-Pfad aus dem ArgoCD-Cluster-Secret |
+| `local.env.example` | Vorlage für `NAS_IP` und `NAS_PATH`, die der Bootstrap ins Cluster-Secret übernimmt |
 | `apps/home-assistant/zigbee2mqtt/deployment.yaml` | USB-Device-Path (muss mit `ls /dev/ttyUSB* /dev/ttyACM*` geprüft werden) |
 
 ## Befehle

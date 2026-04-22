@@ -111,6 +111,10 @@ kubectl describe node pi3 | grep -A5 Labels
 ### 8. ArgoCD installieren
 
 ```bash
+# Optional vorab:
+cp local.env.example local.env
+vim local.env   # NAS_IP und NAS_PATH setzen, wenn NFS direkt mit vorbereitet werden soll
+
 ansible-playbook ansible/playbooks/argocd-bootstrap.yaml
 ```
 
@@ -156,8 +160,12 @@ kubectl get secret -n kube-system \
 ### NFS-Provisioner konfigurieren
 
 ```bash
-# NAS-IP und Pfad in values.yaml eintragen
-vim infrastructure/nfs-provisioner/values.yaml
+# NAS-IP und Pfad in local.env pflegen
+cp local.env.example local.env
+vim local.env
+
+# Cluster-Secret mit NAS-Werten erneut anwenden
+ansible-playbook ansible/playbooks/argocd-bootstrap.yaml
 
 # StorageClass verifizieren
 kubectl get storageclass
