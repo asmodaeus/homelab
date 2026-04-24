@@ -33,3 +33,4 @@ jobs:
           directory: .
           config: .kube-linter.yaml
           format: plain
+          version: "v0.8.3"
