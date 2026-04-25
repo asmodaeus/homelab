@@ -11,11 +11,11 @@ spec:
   source:
     repoURL: https://charts.gabe565.com
     chart: paperless-ngx
-    targetRevision: "0.19.1"
+    targetRevision: "0.24.1"
     helm:
       values: |
         image:
-          tag: "2.13.5"
+          tag: "2.14.7"
 
         env:
           PAPERLESS_URL: http://paperless.local  # ANPASSEN: Phase 4 → https://paperless.home.domain.com
@@ -26,6 +26,7 @@ spec:
           PAPERLESS_TASK_WORKERS: "1"
           PAPERLESS_THREADS_PER_WORKER: "1"
           PAPERLESS_WEBSERVER_WORKERS: "1"
+          PAPERLESS_REDIS: redis://paperless-redis:6379
 
         envFrom:
           - secretRef:
@@ -42,42 +43,29 @@ spec:
           data:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 10Gi
           media:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 20Gi
           export:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 5Gi
           consume:
             enabled: true
             storageClass: nfs
+            accessMode: ReadWriteOnce
             size: 2Gi
 
         redis:
-          enabled: true
-          resources:
-            requests:
-              cpu: 25m
-              memory: 32Mi
-            limits:
-              memory: 64Mi
+          enabled: false
 
         postgresql:
-          enabled: true
-          primary:
-            resources:
-              requests:
-                cpu: 50m
-                memory: 64Mi
-              limits:
-                memory: 128Mi
-            persistence:
-              enabled: true
-              storageClass: nfs
-              size: 5Gi
+          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: paperless
