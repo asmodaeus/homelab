@@ -17,7 +17,7 @@ Externe Erreichbarkeit mit Let's Encrypt-Zertifikaten via Cloudflare DNS-01.
 
 ## cert-manager aktivieren
 
-1. `infrastructure/cert-manager/cluster-issuer.yaml` anpassen:
+1. `infrastructure/cert-manager/cluster-issuer.yaml` neu anlegen:
 
 ```yaml
 # E-Mail und Cloudflare-Credentials eintragen
@@ -33,7 +33,7 @@ kubectl create secret generic cloudflare-api-token \
   kubeseal --format yaml > infrastructure/cert-manager/cloudflare-token-sealed.yaml
 ```
 
-3. Wildcard-Zertifikat-Resource erstellen:
+3. Wildcard-Zertifikat-Resource neu anlegen:
 
 ```yaml
 # infrastructure/cert-manager/wildcard-cert.yaml

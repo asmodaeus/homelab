@@ -1,31 +1,43 @@
 ---
-# ArgoCD verwaltet sich selbst via Helm – ermöglicht Updates ohne manuellen Eingriff
+# ArgoCD verwaltet sich selbst via Helm. Die Repo-Quelle kommt aus dem
+# Cluster-Secret, damit lokales Branch-Testing und Produktion denselben Pfad nutzen.
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
   name: argocd
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-4"
 spec:
-  project: default
-  sources:
-    - repoURL: https://argoproj.github.io/argo-helm
-      chart: argo-cd
-      targetRevision: "7.7.17"
-      helm:
-        valueFiles:
-          - $repo/bootstrap/argocd/values.yaml
-    - repoURL: https://github.com/asmodaeus/homelab.git
-      targetRevision: HEAD
-      ref: repo
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
+  goTemplate: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            homelab-cluster: "true"
+  template:
+    metadata:
+      name: argocd
+      namespace: argocd
+    spec:
+      project: default
+      sources:
+        - repoURL: https://argoproj.github.io/argo-helm
+          chart: argo-cd
+          targetRevision: "7.7.17"
+          helm:
+            valueFiles:
+              - $repo/bootstrap/argocd/values.yaml
+        - repoURL: '{{ index .metadata.annotations "repoURL" }}'
+          targetRevision: '{{ index .metadata.annotations "targetRevision" }}'
+          ref: repo
+      destination:
+        server: '{{ .server }}'
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

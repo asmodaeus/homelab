@@ -37,7 +37,8 @@ jobs:
           helm repo add metallb https://metallb.github.io/metallb
           helm repo add traefik https://traefik.github.io/charts
           helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
-          helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
+          helm repo add nfs-subdir-external-provisioner \
+            https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
           helm repo add argo https://argoproj.github.io/argo-helm
           helm repo add vm https://victoriametrics.github.io/helm-charts
           helm repo add grafana https://grafana.github.io/helm-charts
@@ -55,6 +56,21 @@ jobs:
           done
           echo "HelmRelease structure verified"
 
+  shell-lint:
+    name: Shell Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck and shfmt
+        run: sudo apt-get update && sudo apt-get install -y shellcheck shfmt
+
+      - name: Run shellcheck
+        run: shellcheck dev/*.sh
+
+      - name: Check shell formatting
+        run: shfmt -d dev/*.sh
+
   kubeconform:
     name: Kubernetes Manifest Validation
     runs-on: ubuntu-latest
@@ -68,6 +84,7 @@ jobs:
 
       - name: Validate Kubernetes manifests
         run: |
+          CRD_SCHEMA_URL='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
           find . -name '*.yaml' \
             ! -path './.github/*' \
             ! -path './ansible/*' \
@@ -80,6 +97,6 @@ jobs:
               -ignore-missing-schemas \
               -kubernetes-version 1.31.0 \
               -schema-location default \
-              -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              -schema-location "$CRD_SCHEMA_URL" \
               -summary \
               -verbose
