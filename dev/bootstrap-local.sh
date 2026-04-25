@@ -201,37 +201,37 @@ else
 fi
 
 # In CI: ArgoCD syncht von GitHub + muss Images pullen → deutlich längere Wartezeiten nötig
-WAIT_ITERS=$( [ "${CI:-false}" = "true" ] && echo 72 || echo 30 )
+WAIT_ITERS=$([ "${CI:-false}" = "true" ] && echo 72 || echo 30)
 
 # --- Warten bis ArgoCD die 'infrastructure'-App erstellt hat (zeigt dass Sync gestartet ist) ---
 echo "→ Warte auf ArgoCD Application 'infrastructure'..."
-for i in $(seq 1 $WAIT_ITERS); do
-  if kubectl get application infrastructure -n argocd &>/dev/null 2>&1; then
-    echo "  Application 'infrastructure' erstellt (nach $((i * 10))s)"
-    break
-  fi
-  [ "$i" -eq "$WAIT_ITERS" ] && echo "WARNUNG: Application 'infrastructure' nicht gefunden" && break
-  sleep 10
+for i in $(seq 1 "$WAIT_ITERS"); do
+	if kubectl get application infrastructure -n argocd &>/dev/null 2>&1; then
+		echo "  Application 'infrastructure' erstellt (nach $((i * 10))s)"
+		break
+	fi
+	[ "$i" -eq "$WAIT_ITERS" ] && echo "WARNUNG: Application 'infrastructure' nicht gefunden" && break
+	sleep 10
 done
 
 # --- Warten bis MetalLB controller läuft ---
 echo "→ Warte auf MetalLB controller..."
-for i in $(seq 1 $WAIT_ITERS); do
-  if kubectl get deployment -n metallb-system controller &>/dev/null 2>&1; then
-    kubectl wait --for=condition=Available deployment/controller \
-      -n metallb-system --timeout=120s && break
-  fi
-  sleep 10
+for i in $(seq 1 "$WAIT_ITERS"); do
+	if kubectl get deployment -n metallb-system controller &>/dev/null 2>&1; then
+		kubectl wait --for=condition=Available deployment/controller \
+			-n metallb-system --timeout=120s && break
+	fi
+	sleep 10
 done
 
 # --- Warten bis MetalLB CRDs registriert sind ---
 echo "→ Warte auf MetalLB CRDs..."
-for i in $(seq 1 $WAIT_ITERS); do
-  if kubectl get crd ipaddresspools.metallb.io &>/dev/null 2>&1; then
-    break
-  fi
-  [ "$i" -eq "$WAIT_ITERS" ] && echo "WARNUNG: MetalLB CRDs nach $((WAIT_ITERS * 10 / 60)) Minuten noch nicht bereit" && break
-  sleep 10
+for i in $(seq 1 "$WAIT_ITERS"); do
+	if kubectl get crd ipaddresspools.metallb.io &>/dev/null 2>&1; then
+		break
+	fi
+	[ "$i" -eq "$WAIT_ITERS" ] && echo "WARNUNG: MetalLB CRDs nach $((WAIT_ITERS * 10 / 60)) Minuten noch nicht bereit" && break
+	sleep 10
 done
 
 # --- MetalLB IP-Pool auf Docker-Subnetz patchen ---
@@ -242,9 +242,9 @@ METALLB_RANGE="${BASE}.200-${BASE}.210"
 
 echo "→ Patche MetalLB IP-Pool: $METALLB_RANGE"
 if kubectl get crd ipaddresspools.metallb.io &>/dev/null 2>&1; then
-  kubectl patch ipaddresspool homelab -n metallb-system \
-    --type=merge -p "{\"spec\":{\"addresses\":[\"$METALLB_RANGE\"]}}" \
-    2>/dev/null || kubectl apply -f - <<EOF
+	kubectl patch ipaddresspool homelab -n metallb-system \
+		--type=merge -p "{\"spec\":{\"addresses\":[\"$METALLB_RANGE\"]}}" \
+		2>/dev/null || kubectl apply -f - <<EOF
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
@@ -255,7 +255,7 @@ spec:
     - $METALLB_RANGE
 EOF
 else
-  echo "WARNUNG: MetalLB CRDs nicht bereit – IP-Pool wird nach ArgoCD-Sync konfiguriert"
+	echo "WARNUNG: MetalLB CRDs nicht bereit – IP-Pool wird nach ArgoCD-Sync konfiguriert"
 fi
 
 # --- Ergebnis ---
