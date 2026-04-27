@@ -7,6 +7,7 @@
 #   homelab-cluster: "true"       → alle Cluster (lokal + produktion)
 #   homelab-env: local            → nur lokaler k3d-Cluster (z.B. Gitea)
 #   homelab-env: production       → nur Pi-Cluster (z.B. k3s-Upgrade-Plans)
+#   homelab-monitoring: enabled   → Monitoring-Stack (Victoria Metrics + Grafana)
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -36,6 +37,10 @@ spec:
             - key: sync-order
               operator: In
               values: ["3"]
+        - matchExpressions:
+            - key: sync-order
+              operator: In
+              values: ["4"]
   generators:
     # Nur lokal: Gitea und andere lokale Hilfsdienste
     - matrix:
@@ -72,6 +77,22 @@ spec:
                   path: apps
                   syncOrder: "3"
                   exclude: "{home-assistant/mosquitto,home-assistant/zigbee2mqtt}/**"
+    # Monitoring nur bei expliziter Freischaltung via Cluster-Label.
+    # So bleibt die Phase-2-Infrastruktur im Repo sichtbar, wird aber erst
+    # nach RAM-/Node-Erweiterung tatsächlich ausgerollt.
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  homelab-cluster: "true"
+                  homelab-monitoring: enabled
+          - list:
+              elements:
+                - appName: monitoring
+                  path: monitoring
+                  syncOrder: "4"
+                  exclude: ""
     # Nur Production: config/system-upgrade (k3s-Upgrade-Plans)
     # und Zigbee-Stack (braucht USB-Hardware, lokal nicht verfügbar)
     - matrix:

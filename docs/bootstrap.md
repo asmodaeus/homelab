@@ -187,6 +187,29 @@ git commit -m "feat: add paperless sealed secrets"
 git push
 ```
 
+### Monitoring gezielt freischalten
+
+Monitoring bleibt standardmäßig deaktiviert, bis das Cluster bewusst
+freigeschaltet wird. So verhindert das Repo, dass Victoria Metrics und Grafana
+zu früh auf einem 2-Node-Setup ausgerollt werden.
+
+Voraussetzungen vor der Freischaltung:
+
+- zusätzlicher Worker wie `pi-ha` ist im Cluster
+- das RAM-Budget für Monitoring ist realistisch vorhanden
+- Grafana-Credentials sind geprüft und nicht mehr im Platzhalterzustand
+
+```bash
+kubectl label secret homelab-cluster -n argocd homelab-monitoring=enabled
+kubectl -n argocd get applications
+```
+
+Wenn Monitoring wieder deaktiviert werden soll:
+
+```bash
+kubectl label secret homelab-cluster -n argocd homelab-monitoring-
+```
+
 ---
 
 ## Phase 3: Home Assistant Migration

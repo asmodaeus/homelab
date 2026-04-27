@@ -42,7 +42,7 @@ grafana:
     enabled: true
     storageClass: nfs
     size: 1Gi
-  adminPassword: "CHANGE_ME"  # Über Sealed Secret verwalten!
+  adminPassword: "CHANGE_ME"  # Vor Aktivierung via Secret/Sealed Secret ersetzen!
   # dashboards automatisch laden
   defaultDashboardsEnabled: true
   grafana.ini:
