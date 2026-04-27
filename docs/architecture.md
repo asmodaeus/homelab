@@ -51,7 +51,7 @@ Developer (git push)
         ├── Sync Wave -2: Traefik, Sealed Secrets, NFS, cert-manager
         ├── Sync Wave -1: System Upgrade Controller
         ├── Sync Wave  0: Paperless-ngx, Home Assistant Stack
-        └── Sync Wave  1: Monitoring (Phase 2)
+        └── Sync Wave  1: Monitoring (Phase 2, nur mit Cluster-Label)
 ```
 
 ## Netzwerk-Flow für eingehende Anfragen
@@ -98,7 +98,7 @@ ArgoCD deployt Ressourcen in Wellen, um Abhängigkeiten zu respektieren:
 | -2 | Traefik, Sealed Secrets, NFS Provisioner, cert-manager | Infrastructure vor Apps |
 | -1 | System Upgrade Controller | Nach Cluster-Infrastruktur |
 | 0 | Paperless-ngx, Home Assistant Stack | App-Layer |
-| 1 | Victoria Metrics, Grafana | Monitoring (Phase 2, auf Pi 4) |
+| 1 | Victoria Metrics, Grafana | Monitoring (Phase 2, nur bei `homelab-monitoring=enabled`) |
 
 ## Ressourcen-Budget
 

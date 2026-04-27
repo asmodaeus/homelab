@@ -34,7 +34,7 @@ Kubernetes-Homelab auf Raspberry Pi, verwaltet via GitOps (ArgoCD).
 | Phase | Inhalt | Status |
 |---|---|---|
 | 1 | K3s-Cluster + ArgoCD + MetalLB + Traefik | 🔧 In Arbeit |
-| 2 | Paperless-ngx + Monitoring + Sealed Secrets | 📋 Geplant |
+| 2 | Paperless-ngx + Monitoring + Sealed Secrets | 📋 Geplant, Monitoring opt-in via Cluster-Label |
 | 3 | Home Assistant Migration (HA-Pi → Cluster) | 📋 Geplant |
 | 4 | TLS + externe Erreichbarkeit | 📋 Geplant |
 
@@ -83,6 +83,20 @@ kubectl label node <pi3-hostname> workload=light
 kubectl taint node <pi3-hostname> workload=light:NoSchedule
 kubectl label node <pi3-hostname> homelab/zigbee-adapter=true
 ```
+
+## Monitoring freischalten
+
+Monitoring ist im Repo vorbereitet, wird aber erst ausgerollt, wenn das
+Cluster explizit dafür freigeschaltet wird. Das verhindert, dass Victoria
+Metrics + Grafana versehentlich auf einem zu kleinen 2-Node-Setup landen.
+
+```bash
+# Erst nach zusätzlichem Worker / ausreichendem RAM-Budget aktivieren
+kubectl label secret homelab-cluster -n argocd homelab-monitoring=enabled
+```
+
+Danach erzeugt ArgoCD den Monitoring-Stack automatisch. Für lokales Testen
+gilt derselbe Mechanismus.
 
 ---
 

@@ -98,6 +98,7 @@ Der Workflow `.github/workflows/ci-integration.yaml` startet ein k3d-Cluster in 
 | `bootstrap/root-app.yaml` | Einzige manuell angewendete Ressource – Schlüsselstein des GitOps-Systems |
 | `dev/k3d-config.yaml` | k3d-Cluster-Konfiguration inkl. Node-Labels/Taints für Agent |
 | `dev/bootstrap-local.sh` | Lokaler Bootstrap + `CI=true`-Modus für GitHub Actions |
+| `bootstrap/app-of-apps.yaml` | Cluster-gesteuerte Rollout-Logik; Monitoring nur mit `homelab-monitoring=enabled` |
 | `ansible/inventory/hosts.yaml` | Pi-IPs und Rollen (muss vor Bootstrap ausgefüllt sein) |
 | `infrastructure/metallb/ip-address-pool.yaml` | MetalLB IP-Range (im Router-DHCP ausschließen!) |
 | `bootstrap/nfs-app.yaml` | NFS-Provisioner liest NAS-IP + NFS-Pfad aus dem ArgoCD-Cluster-Secret |
@@ -129,4 +130,4 @@ kubectl label node <pi3-hostname> homelab/zigbee-adapter=true
 - Wave `-2`: Traefik, cert-manager, Sealed Secrets, NFS Provisioner
 - Wave `-1`: System Upgrade Controller
 - Wave `0`: Apps (Paperless-ngx, Home Assistant Stack)
-- Wave `1`: Monitoring (Phase 2)
+- Wave `1`: Monitoring (Phase 2, nur mit `homelab-monitoring=enabled`)
